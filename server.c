@@ -22,9 +22,6 @@ struct sockserver {
 		int fd;
 	} clients[MAXCLIENTS];
 
-	fd_set fdset;
-	int highfd;
-
 	log_t *log;
 };
 
@@ -32,7 +29,7 @@ static void setnonblocking(int sock);
 
 static void handleconn(sockserver *);
 static void closeconn(sockserver *, int i);
-static void readsocks(sockserver *, ready_cb callback);
+static void readsocks(sockserver *srv, fd_set fdset, ready_cb callback);
 
 void setnonblocking(int sock)
 {
@@ -48,7 +45,6 @@ void setnonblocking(int sock)
 void handleconn(sockserver *srv)
 {
 	int i, conn;
-	fd_set *fdset = &srv->fdset;
 
 	conn = accept(srv->fd, NULL, NULL);
 	if (conn < 0)
@@ -56,16 +52,11 @@ void handleconn(sockserver *srv)
 
 	setnonblocking(conn);
 
-	for (i = 0; i < 5; i++) {
+	for (i = 0; i < MAXCLIENTS; i++) {
 		if (srv->clients[i].fd == 0) {
 			srv->clients[i].fd = conn;
 			srv->clients[i].id = srv->nextid++;
-
 			log(srv->log, "connection accepted | id: %d\n", srv->clients[i].id);
-
-			FD_SET(conn, &srv->fdset);
-			if (conn > srv->highfd)
-				srv->highfd = conn;
 			return;
 		}
 	}
@@ -76,35 +67,22 @@ void handleconn(sockserver *srv)
 
 void closeconn(sockserver *srv, int i)
 {
-	int fd = srv->clients[i].fd;
+	log(srv->log, "closing connection  | id: %d\n", srv->clients[i].id);
+
+	close(srv->clients[i].fd);
 	srv->clients[i].fd = 0;
-
-	log(srv->log, "closing connection | id: %d", srv->clients[i].id);
-
-	close(fd);
-	FD_CLR(fd, &srv->fdset);
-
-	if (fd == srv->highfd) {
-		srv->highfd = srv->clients[0].fd;
-
-		for (i = 1; i < MAXCLIENTS; i++) {
-			fd = srv->clients[i].fd;
-			if (fd > srv->highfd)
-				srv->highfd = fd;
-		}
-	}
 }
 
-void readsocks(sockserver *srv, ready_cb callback)
+void readsocks(sockserver *srv, fd_set fdset, ready_cb callback)
 {
 	int i;
 
-	if (FD_ISSET(srv->fd, &srv->fdset))
+	if (FD_ISSET(srv->fd, &fdset))
 		handleconn(srv);
 
 	/* TODO: call callback, determine if needs to close */
 	for (i = 0; i < MAXCLIENTS; i++) {
-		if (FD_ISSET(srv->clients[i].fd, &srv->fdset)) {
+		if (FD_ISSET(srv->clients[i].fd, &fdset)) {
 			if (callback(srv->clients[i].id, srv->clients[i].fd))
 				closeconn(srv, i);
 		}
@@ -141,11 +119,6 @@ sockserver *startserver(int port)
 		die("listen failed on port %d\n", port);
 
 	srv->nextid = 0;
-
-	FD_ZERO(&srv->fdset);
-	FD_SET(srv->fd, &srv->fdset);
-	srv->highfd = srv->fd;
-
 	return srv;
 }
 
@@ -155,7 +128,9 @@ void pollserver(sockserver *srv, int timeout, ready_cb callback)
 	unsigned int addrlen = sizeof(struct sockaddr_in);
 	struct timeval* tmout = NULL;
 	int cfd = 0;
-	int ready;
+	int i, ready;
+	int fd, highfd;
+	fd_set fdset;
 
 	if (!srv || !srv->fd)
 		return;
@@ -166,13 +141,24 @@ void pollserver(sockserver *srv, int timeout, ready_cb callback)
 		tmout->tv_usec = (timeout % 1000) * 1000;
 	}
 
-	ready = select(srv->highfd + 1, &srv->fdset, 0, 0, tmout);
+	highfd = srv->fd;
+
+	FD_ZERO(&fdset);
+	FD_SET(srv->fd, &fdset);
+	for (i = 0; i < MAXCLIENTS; i++) {
+		fd = srv->clients[i].fd;
+		if (fd > 0) {
+			FD_SET(fd, &fdset);
+			if (fd > highfd)
+				highfd = fd;
+		}
+	}
+
+	ready = select(highfd + 1, &fdset, 0, 0, tmout);
 	if (ready < 0)
 		die("select failed\n");
-	else if (ready > 0) {
-		printf("got work\n");
-		readsocks(srv, callback);
-	}
+	else if (ready > 0)
+		readsocks(srv, fdset, callback);
 
 	if (tmout)
 		free(tmout);
