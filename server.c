@@ -1,8 +1,19 @@
 #include "server.h"
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include "util.h"
+
 #define MAXCLIENTS 5
 
-struct {
+struct sockserver {
 	int fd;
 	
 	int nextid;
@@ -15,7 +26,7 @@ struct {
 	int highfd;
 
 	log_t *log;
-} sockserver;
+};
 
 static void setnonblocking(int sock);
 
@@ -46,10 +57,10 @@ void handleconn(sockserver *srv)
 	setnonblocking(conn);
 
 	for (i = 0; i < 5; i++) {
-		if (srv->clients[i]->fd == 0) {
-			log(serverlog, "connection accepted\n");
-			srv->clients[i]->fd = conn;
-			srv->clients[i]->id = s->nid++;
+		if (srv->clients[i].fd == 0) {
+			log(srv->log, "connection accepted\n");
+			srv->clients[i].fd = conn;
+			srv->clients[i].id = srv->nextid++;
 
 			FD_SET(conn, &srv->fdset);
 			if (conn > srv->highfd)
@@ -58,40 +69,40 @@ void handleconn(sockserver *srv)
 		}
 	}
 
-	log(serverlog, "connection rejected: no room left for new clients\n");
+	log(srv->log, "connection rejected: no room left for new clients\n");
 	close(conn);
 }
 
 void closeconn(sockserver *srv, int i)
 {
-	int i, fd = srv->clients[i]->fd;
-	srv->clients[i]->fd = 0;
+	int fd = srv->clients[i].fd;
+	srv->clients[i].fd = 0;
 
 	close(fd);
-	FD_CLEAR(fd, &srv->fdset);
+	FD_CLR(fd, &srv->fdset);
 
 	if (fd == srv->highfd) {
-		srv->highfd = srv->clients[0]->fd;
+		srv->highfd = srv->clients[0].fd;
 
 		for (i = 1; i < MAXCLIENTS; i++) {
-			fd = srv->clients[i]->fd;
+			fd = srv->clients[i].fd;
 			if (fd > srv->highfd)
 				srv->highfd = fd;
 		}
 	}
 }
 
-void readsocks(sockserver *svr, ready_cb callback)
+void readsocks(sockserver *srv, ready_cb callback)
 {
 	int i;
 
-	if (FD_ISSET(srv->fd, &socks))
+	if (FD_ISSET(srv->fd, &srv->fdset))
 		handleconn(srv);
 
 	/* TODO: call callback, determine if needs to close */
 	for (i = 0; i < MAXCLIENTS; i++) {
-		if (FD_ISSET(srv->clients[i]->fd, &srv->fdset)) {
-			if (callback(srv->clients[i]->id, srv->clients[i]->fd))
+		if (FD_ISSET(srv->clients[i].fd, &srv->fdset)) {
+			if (callback(srv->clients[i].id, srv->clients[i].fd))
 				closeconn(srv, i);
 		}
 	}
@@ -99,12 +110,12 @@ void readsocks(sockserver *svr, ready_cb callback)
 
 sockserver *startserver(int port)
 {
-	socksever *srv = malloc(sizeof(sockserver));
+	sockserver *srv = malloc(sizeof(sockserver));
+	memset(&srv->clients, 0, sizeof(srv->clients));
 
 	struct sockaddr_in addr;
 	int addrlen = sizeof(struct sockaddr_in);
 	int reuse_addr = 1;
-	int result;
 
 	srv->log = newlog("/tmp/smallhttp-server.log");
 
@@ -120,20 +131,22 @@ sockserver *startserver(int port)
 	setsockopt(srv->fd, SOL_SOCKET, SO_REUSEADDR, &reuse_addr, sizeof(reuse_addr));
 	setnonblocking(srv->fd);
 
-	result = bind(srv->fd, (struct sockaddr *)&addr, sizeof(addr));
-	if (rslt == -1)
+	if (bind(srv->fd, (struct sockaddr *)&addr, sizeof(addr)) == -1)
 		die("bind failed on port %d\n", port);
 
-	result = listen(srv->fd, MAXCLIENTS);
-	if (rslt == -1)
+	if (listen(srv->fd, MAXCLIENTS) == -1)
 		die("listen failed on port %d\n", port);
 
-	srv->highfd = srv->fd;
+	srv->nextid = 0;
+
 	FD_ZERO(&srv->fdset);
-	memset(&srv->clients, 0, sizeof(srv->clients));
+	FD_SET(srv->fd, &srv->fdset);
+	srv->highfd = srv->fd;
+
+	return srv;
 }
 
-void pollserver(sockserver *srv, int timeout, ready_cb callback);
+void pollserver(sockserver *srv, int timeout, ready_cb callback)
 {
 	struct sockaddr_in caddr;
 	unsigned int addrlen = sizeof(struct sockaddr_in);
@@ -150,15 +163,12 @@ void pollserver(sockserver *srv, int timeout, ready_cb callback);
 		tmout->tv_usec = (timeout % 1000) * 1000;
 	}
 
-	if (ready = select(srv->highfd + 1, &srv->fdset, 0, 0, tmout)) {
-		if (ready < 0)
-			die("select failed\n");
-		else if (ready == 0) {
-			printf(".");
-			fflush(stdout);
-		}
-		else
-			readsocks(srv, callback);
+	ready = select(srv->highfd + 1, &srv->fdset, 0, 0, tmout);
+	if (ready < 0)
+		die("select failed\n");
+	else if (ready > 0) {
+		printf("got work\n");
+		readsocks(srv, callback);
 	}
 
 	if (tmout)
