@@ -58,9 +58,10 @@ void handleconn(sockserver *srv)
 
 	for (i = 0; i < 5; i++) {
 		if (srv->clients[i].fd == 0) {
-			log(srv->log, "connection accepted\n");
 			srv->clients[i].fd = conn;
 			srv->clients[i].id = srv->nextid++;
+
+			log(srv->log, "connection accepted | id: %d\n", srv->clients[i].id);
 
 			FD_SET(conn, &srv->fdset);
 			if (conn > srv->highfd)
@@ -77,6 +78,8 @@ void closeconn(sockserver *srv, int i)
 {
 	int fd = srv->clients[i].fd;
 	srv->clients[i].fd = 0;
+
+	log(srv->log, "closing connection | id: %d", srv->clients[i].id);
 
 	close(fd);
 	FD_CLR(fd, &srv->fdset);
