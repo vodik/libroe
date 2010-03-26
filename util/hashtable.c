@@ -9,19 +9,11 @@ struct keypair {
 	struct keypair *next;
 };
 
-static char *mystrdup(const char *s)
+static unsigned int sdbmhasher(const char *key)
 {
-	char *b;
-	b = malloc(strlen(s) + 1);
-	strcpy(b, s);
-	return b;
-}
-
-static unsigned int defhashfunc(const char *key)
-{
-	unsigned int hash = 0;
+	unsigned long hash = 0;
 	while (*key)
-		hash += (unsigned int)*key++;
+		hash = *key++ + (hash << 6) + (hash << 16) - hash;
 	return hash;
 }
 
@@ -30,7 +22,7 @@ void hashtable_init(unsigned int size, hashfunc hasher, hashashtable *tbl)
 	tbl->nodes = calloc(size, sizeof(struct keypair *));
 	memset(tbl->nodes, 0, sizeof(struct keypair *) * size);
 	tbl->size = size;
-	tbl->hasher = hasher ? hasher : defhashfunc;
+	tbl->hasher = hasher ? hasher : sdbmhasher;
 }
 
 void hashtable_free(hashashtable *tbl)
@@ -65,7 +57,7 @@ void hashtable_insert(hashashtable *tbl, const char *key, void *data)
 		node = node->next;
 	}
 	node = malloc(sizeof(struct keypair));
-	node->key = mystrdup(key);
+	node->key = strdup(key);
 	node->data = data;
 	node->next = tbl->nodes[hash];
 	tbl->nodes[hash] = node;
