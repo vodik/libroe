@@ -5,13 +5,13 @@
 #include <stdarg.h>
 #include <unistd.h>
 
-struct log_t {
+/*struct log_t {
 	const char *logfile;
 };
 
 log_t *newlog(const char *fn)
 {
-	if (access(fn, R_OK | W_OK))
+	if (access(fn, W_OK))
 		remove(fn);
 
 	log_t *l = malloc(sizeof(log_t));
@@ -28,7 +28,7 @@ void log(log_t *l, const char *msg, ...)
 	vfprintf(fp, msg, args);
 	va_end(args);
 	fclose(fp);
-}
+}*/
 
 void die(const char *err, ...)
 {

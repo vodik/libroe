@@ -1,20 +1,20 @@
-CC = clang
-CFLAGS = -Wall -pedantic --std=c99
+CC = gcc
+CFLAGS = -Wall -pedantic --std=gnu99 -I. -O2
 LDFLAGS =
 
-SRC = test.c smallhttp.c server.c util.c
+SRC = staticserver.c mplexsocks.c http/parser.c http/request.c util.c util/hashtable.c
 OBJ = ${SRC:.c=.o}
 
-all: smallhttp_test
+all: staticserver
 
 .c.o:
 	@echo CC $@
-	@${CC} -c ${CFLAGS} $<
+	@${CC} -o $@ -c ${CFLAGS} $<
 
-smallhttp_test: ${OBJ}
+staticserver: ${OBJ}
 	@echo CC -o $@
 	@${CC} -o $@ ${OBJ} ${LDFLAGS}
 
 clean:
 	@echo cleaning...
-	@rm -f carbon ${OBJ}
+	@rm -f staticserver ${OBJ}
