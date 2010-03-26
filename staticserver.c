@@ -16,18 +16,23 @@ static void *onconnect()
 	return context;
 }
 
-static void onclose(void *context)
+static void onclose(void *ctxt)
 {
+	struct http_context *context = ctxt;
+
+	http_parser_free(&context->parser);
 	free(context);
 }
 
+/**
+ * FIXME: there are memory allocation issues in the parser. */
 static int onrecv(void *ctxt, int socketfd)
 {
 	struct http_context *context = ctxt;
 
 	char buf[BUFSIZ];
 	ssize_t r = 1;
-	const http_request *request;
+	const http_request const *request;
 
 	while (r > 0) {
 		r = read(socketfd, buf, BUFSIZ);

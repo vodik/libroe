@@ -13,7 +13,7 @@ struct hashashtable {
 };
 
 void hashtable_init(unsigned int size, hashfunc hasher, hashashtable *tbl);
-void hashtable_free(hashashtable *);
+void hashtable_free(hashashtable *, int freedata);
 
 void hashtable_insert(hashashtable *, const char *key, void *data);
 int hashtable_remove(hashashtable *, const char *key);

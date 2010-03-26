@@ -3,12 +3,22 @@
 #include <stdlib.h>
 #include <string.h>
 
+/** 
+* @brief 
+*/
 struct keypair {
 	char *key;
 	void *data;
 	struct keypair *next;
 };
 
+/** 
+* @brief 
+* 
+* @param key
+* 
+* @return 
+*/
 static unsigned int sdbmhasher(const char *key)
 {
 	unsigned long hash = 0;
@@ -17,6 +27,13 @@ static unsigned int sdbmhasher(const char *key)
 	return hash;
 }
 
+/** 
+* @brief 
+* 
+* @param size
+* @param hasher
+* @param tbl
+*/
 void hashtable_init(unsigned int size, hashfunc hasher, hashashtable *tbl)
 {
 	tbl->nodes = calloc(size, sizeof(struct keypair *));
@@ -25,7 +42,12 @@ void hashtable_init(unsigned int size, hashfunc hasher, hashashtable *tbl)
 	tbl->hasher = hasher ? hasher : sdbmhasher;
 }
 
-void hashtable_free(hashashtable *tbl)
+/** 
+* @brief 
+* 
+* @param tbl
+*/
+void hashtable_free(hashashtable *tbl, int freedata)
 {
 	int i;
 	struct keypair *node, *prev;
@@ -34,15 +56,23 @@ void hashtable_free(hashashtable *tbl)
 		node = tbl->nodes[i];
 		while (node) {
 			free(node->key);
+			if (freedata)
+				free(node->data);
 			prev = node;
 			node = node->next;
 			free(prev);
 		}
 	}
 	free(tbl->nodes);
-	free(tbl);
 }
 
+/** 
+* @brief 
+* 
+* @param tbl
+* @param key
+* @param data
+*/
 void hashtable_insert(hashashtable *tbl, const char *key, void *data)
 {
 	struct keypair *node;
@@ -63,6 +93,14 @@ void hashtable_insert(hashashtable *tbl, const char *key, void *data)
 	tbl->nodes[hash] = node;
 }
 
+/** 
+* @brief Remove an entry from a hashtable.
+* 
+* @param tbl the hashtable.
+* @param key the key to remove.
+* 
+* @return 0 on success, 1 on failure.
+*/
 int hashtable_remove(hashashtable *tbl, const char *key)
 {
 	struct keypair *node, *prev = NULL;
@@ -86,6 +124,14 @@ int hashtable_remove(hashashtable *tbl, const char *key)
 	return 1;
 }
 
+/** 
+* @brief Retrieve a value from a hashtable.
+* 
+* @param tbl the hashtable.
+* @param key the key to retrieve.
+* 
+* @return if present, the stored data. Otherwise NULL.
+*/
 void *hashtable_get(const hashashtable *tbl, const char *key)
 {
 	struct keypair *node;
@@ -100,6 +146,12 @@ void *hashtable_get(const hashashtable *tbl, const char *key)
 	return NULL;
 }
 
+/** 
+* @brief 
+* 
+* @param tbl
+* @param size
+*/
 void hashtable_resize(hashashtable *tbl, unsigned int size)
 {
 	hashashtable newtbl;

@@ -17,6 +17,13 @@ static int read_header(struct state *state, const char **http, int *len);
 static int read_value(struct state *state, const char **http, int *len);
 static inline void startstate(struct state *state, void *arg);
 
+/** 
+* @brief 
+* 
+* @param state
+* 
+* @return 
+*/
 static int get_method(struct state *state)
 {
 	http_request *request = state->arg;
@@ -45,6 +52,13 @@ static int get_method(struct state *state)
 	return 0;
 }
 
+/** 
+* @brief 
+* 
+* @param state
+* 
+* @return 
+*/
 static int get_path(struct state *state)
 {
 	http_request *request = state->arg;
@@ -56,6 +70,13 @@ static int get_path(struct state *state)
 	return 0;
 }
 
+/** 
+* @brief 
+* 
+* @param state
+* 
+* @return 
+*/
 static int get_version(struct state *state)
 {
 	http_request *request = state->arg;
@@ -80,6 +101,13 @@ static int get_version(struct state *state)
 	return 1;
 }
 
+/** 
+* @brief 
+* 
+* @param state
+* 
+* @return 
+*/
 static int get_header(struct state *state)
 {
 	state->tmp = strndup(state->buf, state->len);
@@ -88,16 +116,33 @@ static int get_header(struct state *state)
 	return 0;
 }
 
+/** 
+* @brief 
+* 
+* @param state
+* 
+* @return 
+*/
 static int get_value(struct state *state)
 {
 	http_request *request = state->arg;
 
 	hashtable_insert(&request->headers, state->tmp, strndup(state->buf, state->len));
+	free(state->tmp);
 	state->parse = get_header;
 	state->next = read_header;
 	return 0;
 }
 
+/** 
+* @brief 
+* 
+* @param state
+* @param http
+* @param len
+* 
+* @return 
+*/
 static int read_request1(struct state *state, const char **http, int *len)
 {
 	char *b = state->buf + state->len;
@@ -116,6 +161,15 @@ static int read_request1(struct state *state, const char **http, int *len)
 	return 1;
 }
 
+/** 
+* @brief 
+* 
+* @param state
+* @param http
+* @param len
+* 
+* @return 
+*/
 static int read_request2(struct state *state, const char **http, int *len)
 {
 	char *b = state->buf + state->len;
@@ -134,6 +188,15 @@ static int read_request2(struct state *state, const char **http, int *len)
 	return 1;
 }
 
+/** 
+* @brief 
+* 
+* @param state
+* @param http
+* @param len
+* 
+* @return 
+*/
 static int read_header(struct state *state, const char **http, int *len)
 {
 	char *b = state->buf + state->len;
@@ -164,6 +227,15 @@ static int read_header(struct state *state, const char **http, int *len)
 	return 1;
 }
 
+/** 
+* @brief 
+* 
+* @param state
+* @param http
+* @param len
+* 
+* @return 
+*/
 static int read_value(struct state *state, const char **http, int *len)
 {
 	char *b = state->buf + state->len;
@@ -182,20 +254,51 @@ static int read_value(struct state *state, const char **http, int *len)
 	return 1;
 }
 
+/** 
+* @brief 
+* 
+* @param state
+* @param arg
+*/
 static inline void startstate(struct state *state, void *arg)
 {
+	state->len = 0;
 	state->next = read_request1;
 	state->parse = get_method;
 	state->arg = arg;
 	state->done = 0;
 }
 
+/** 
+* @brief 
+* 
+* @param parser
+*/
 void http_parser_init(http_parser *parser)
 {
 	http_request_init(&parser->request);
 	startstate(&parser->state, &parser->request);
 }
 
+/** 
+* @brief 
+* 
+* @param parser
+*/
+void http_parser_free(http_parser *parser)
+{
+	http_request_free(&parser->request);
+}
+
+/** 
+* @brief 
+* 
+* @param parser
+* @param buf
+* @param len
+* 
+* @return 
+*/
 int http_parser_read(http_parser *parser, const char *buf, int len)
 {
 	while (len > 0 && parser->state.next) {
@@ -207,6 +310,13 @@ int http_parser_read(http_parser *parser, const char *buf, int len)
 	return 0;
 }
 
+/** 
+* @brief 
+* 
+* @param parser
+* 
+* @return 
+*/
 const http_request const *http_parser_done(http_parser *parser)
 {
 	return parser->state.done ? &parser->request : NULL;

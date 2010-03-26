@@ -5,12 +5,13 @@
 
 typedef struct {
 	int method;
-	const char *path;
+	char *path;
 	int version_major, version_minor;
 
 	hashashtable headers;
 } http_request;
 
 void http_request_init(http_request *);
+void http_request_free(http_request *);
 
 #endif

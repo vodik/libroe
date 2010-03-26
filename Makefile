@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -pedantic --std=gnu99 -I. -O2
+CFLAGS = -Wall -pedantic --std=gnu99 -I. -g
 LDFLAGS =
 
 SRC = staticserver.c mplexsocks.c http/parser.c http/request.c util.c util/hashtable.c

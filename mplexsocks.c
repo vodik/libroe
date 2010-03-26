@@ -18,10 +18,11 @@ static void readsocks(mplexsocks *socks, fd_set *set, recvcb callback);
 static inline struct timeval *gettimeout(int timeout);
 static inline int buildfdset(mplexsocks *socks, fd_set *set);
 
-/**
- * an internal function to set a file descriptor to not block
- * @param fd the file descriptor
- */
+/** 
+* @brief an internal function to set a file descriptor to not block
+* 
+* @param fd
+*/
 static inline void setnonblocking(int fd)
 {
 	int opts = fcntl(fd, F_GETFL);
