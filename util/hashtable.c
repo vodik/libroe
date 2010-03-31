@@ -1,6 +1,7 @@
 #include "hashtable.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 /** 
@@ -21,7 +22,7 @@ struct keypair {
 */
 static unsigned int sdbmhasher(const char *key)
 {
-	unsigned long hash = 0;
+	unsigned int hash = 0;
 	while (*key)
 		hash = *key++ + (hash << 6) + (hash << 16) - hash;
 	return hash;
@@ -49,7 +50,7 @@ void hashtable_init(unsigned int size, hashfunc hasher, hashashtable *tbl)
 */
 void hashtable_free(hashashtable *tbl, int freedata)
 {
-	int i;
+	unsigned int i;
 	struct keypair *node, *prev;
 
 	for (i = 0; i < tbl->size; ++i) {
@@ -77,6 +78,7 @@ void hashtable_insert(hashashtable *tbl, const char *key, void *data)
 {
 	struct keypair *node;
 	unsigned int hash = tbl->hasher(key) % tbl->size;
+	printf("hash=%d\n", hash);
 
 	node = tbl->nodes[hash];
 	while (node) {
@@ -156,7 +158,7 @@ void hashtable_resize(hashashtable *tbl, unsigned int size)
 {
 	hashashtable newtbl;
 	struct keypair* node;
-	int i;
+	unsigned int i;
 
 	newtbl.size = size;
 	newtbl.hasher = tbl->hasher;
