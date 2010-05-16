@@ -34,8 +34,8 @@ const char *page =
 	"  </body>\n"
 	"</html>\n";
 
-/* TODO: security. This can escape root with a malformed request (browsers filter .. though) */
-void send_file(http_response *response, const char *path)
+/* TODO: security. This can escape root with a malformed request (browsers filter /../ though) */
+void send_file(http_response *response, const char *path, const char *mime)
 {
 	int fd, filesize;
 	char *map;
@@ -51,9 +51,12 @@ void send_file(http_response *response, const char *path)
 	filesize = lseek(fd, 0, SEEK_END);
 	map = mmap(0, filesize, PROT_READ, MAP_SHARED, fd, 0);
 
-	http_response_begin(response, TRANSFER_ENCODING_NONE, 200, "OK", "text/html", filesize);
+	http_response_begin(response, TRANSFER_ENCODING_NONE, 200, "OK", mime, filesize);
 	http_response_write(response, map, filesize);
 	http_response_end(response);
+
+	munmap(map, filesize);
+	close(fd);
 }
 
 int http_get(const http_request const *request, http_response *response)
@@ -66,13 +69,17 @@ int http_get(const http_request const *request, http_response *response)
 	printf(" > user-agent: %s\n", (char *)hashtable_get(&request->headers, "User-Agent"));
 	printf("\n");
 
-	send_file(response, request->path);
+	if (strcmp(request->path, "/favicon.ico") == 0)
+		send_file(response, request->path, "image/vnd.microsoft.icon");
+	else
+		send_file(response, request->path, "text/html");
 	return 1;
 }
 
 static struct http_events_t http_handler = {
 	.GET  = http_get,
-	.POST = NULL,
+	.POST = http_get,
+	.PUT  = NULL,
 };
 
 int main(int argc, char *argv[])
