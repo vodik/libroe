@@ -44,10 +44,27 @@ int http_on_recv(int fd, void *context, void *arg)
 		http_parser_read(parser, buf, r);
 	}
 	request = http_parser_done(parser);
+
 	if (request) {
 		struct http_events_t *events = service->events;
-		if (events && events->GET)
-			return events->GET(request, response);
+		if (events) {
+			switch (request->method) {
+				case HTTP_GET:
+					if (events->GET)
+						return events->GET(request, response);
+					return 1;
+				case HTTP_POST:
+					if (events->POST)
+						return events->POST(request, response);
+					return 1;
+				case HTTP_PUT:
+					if (events->PUT)
+						return events->PUT(request, response);
+					return 1;
+				default:
+					return 1;
+			}
+		}
 		else
 			return 1;
 	}

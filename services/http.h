@@ -9,6 +9,7 @@ typedef int (*request_cb)(const http_request const *request, http_response *resp
 
 struct http_events_t {
 	request_cb GET;
+	request_cb PUT;
 	request_cb POST;
 };
 
