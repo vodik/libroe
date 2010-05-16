@@ -58,6 +58,7 @@ void http_on_disconnection(void *context, void *arg)
 {
 	struct http_context_t *ctext = context;
 	http_parser_free(&ctext->parser);
+	http_response_end(&ctext->response);
 }
 
 static struct fdcbs_t http_callbacks = {
