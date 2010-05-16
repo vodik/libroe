@@ -12,25 +12,60 @@
 #include <netinet/in.h>
 #include <util/hashtable.h>
 
-/*void response_send(const http_request const *request, int code, const char *message, http_response *response)
-{
-	char buffer[BUFSIZ];
-
-	int fd = response->fd;
-	int len = sprintf(buffer, "HTTP/1.1 %i %s\r\nContent-Type: %s\r\n\r\n", code, message, "text/plain");
-	printf("%d: %s\n", len, buffer);
-	int r = send(fd, buffer, len, 0);
-	printf("got %d\n", r);
-}*/
-
 void http_response_init(http_response *response, int fd)
 {
+	response->sending = 0;
 	response->fd = fd;
-	hashtable_init(16, NULL, &response->headers);
 }
 
-/* FIXME: clean up all hashtable entries */
-void http_response_free(http_response *response)
+void http_response_begin(http_response *response, int encoding, int code, const char *msg, int content_length)
 {
-	hashtable_free(&response->headers, 1);
+	static char buffer[BUFSIZ];
+	int len, fd = response->fd;
+
+	response->encoding = encoding;
+	response->sending = 1;
+
+	switch (encoding) {
+		case TRANSFER_ENCODING_NONE:
+			len = sprintf(buffer, "HTTP/1.1 %i %s\r\nContent-Type: %s\r\nContent-Length: %i\r\n\r\n", code, msg, "text/plain", content_length);
+			break;
+		case TRANSFER_ENCODING_CHUNKED:
+			len = sprintf(buffer, "HTTP/1.1 %i %s\r\nContent-Type: %s\r\nTransfer-Encoding: %s\r\n\r\n", code, msg, "text/plain", "chunked");
+			break;
+	}
+	send(fd, buffer, len, 0);
 }
+
+void http_response_write(http_response *response, const char *data, size_t nbytes)
+{
+	static char buffer[10];
+
+	if (!response->sending)
+		return;
+
+	int len, fd = response->fd;
+	switch (response->encoding) {
+		case TRANSFER_ENCODING_NONE:
+			send(fd, data, nbytes, 0);
+			break;
+		case TRANSFER_ENCODING_CHUNKED:
+			len = sprintf(buffer, "%x\r\n", nbytes);
+			send(fd, buffer, len, 0);
+			send(fd, data, nbytes, 0);
+			send(fd, "\r\n\r\n", 4, 0);
+			break;
+	}
+}
+
+void http_response_end(http_response *response)
+{
+	int fd = response->fd;
+
+	response->sending = 0;
+
+	if (response->encoding == TRANSFER_ENCODING_CHUNKED) {
+		send(fd, "0\r\n\r\n", 5, 0);
+	}
+}
+
