@@ -23,6 +23,7 @@ void *http_on_connection(int fd, void *arg)
 {
 	struct http_context_t *context = malloc(sizeof(struct http_context_t));
 	http_parser_init(&context->parser, fd);
+	http_response_init(&context->response, fd);
 	return context;
 }
 

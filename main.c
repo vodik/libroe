@@ -3,10 +3,30 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include <socks.h>
 #include <services/http.h>
 #include <services/websocks.h>
+
+const char *page =
+	"<html>\n"
+	"  <head>\n"
+	"    <style>\n"
+	"      body {\n"
+	"        font-family: trebuchet ms;\n"
+	"        background: #424242; \n"
+	"        color: #fff;\n"
+	"        text-align: center;\n"
+	"        margin-top:10em;\n"
+	"      }\n"
+	"    </style>\n"
+	"  </head>\n"
+	"  <body>\n"
+	"    <h1>Your C web server is alive!</h1>\n"
+	"    Hello World!\n"
+	"  </body>\n"
+	"</html>\n";
 
 int http_get(const http_request const *request, http_response *response)
 {
@@ -18,7 +38,9 @@ int http_get(const http_request const *request, http_response *response)
 	printf(" > user-agent: %s\n", (char *)hashtable_get(&request->headers, "User-Agent"));
 	printf("\n");
 
-	//response_send(request, 404, "Not Found", response);
+	http_response_begin(response, TRANSFER_ENCODING_NONE, 200, "OK", "text/html", strlen(page));
+	http_response_write(response, page, strlen(page));
+	http_response_end(response);
 	return 1;
 }
 

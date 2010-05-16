@@ -18,7 +18,7 @@ void http_response_init(http_response *response, int fd)
 	response->fd = fd;
 }
 
-void http_response_begin(http_response *response, int encoding, int code, const char *msg, int content_length)
+void http_response_begin(http_response *response, int encoding, int code, const char *msg, const char *mime, int content_length)
 {
 	static char buffer[BUFSIZ];
 	int len, fd = response->fd;
@@ -28,10 +28,10 @@ void http_response_begin(http_response *response, int encoding, int code, const 
 
 	switch (encoding) {
 		case TRANSFER_ENCODING_NONE:
-			len = sprintf(buffer, "HTTP/1.1 %i %s\r\nContent-Type: %s\r\nContent-Length: %i\r\n\r\n", code, msg, "text/plain", content_length);
+			len = sprintf(buffer, "HTTP/1.1 %i %s\r\nContent-Type: %s\r\nContent-Length: %i\r\n\r\n", code, msg, mime, content_length);
 			break;
 		case TRANSFER_ENCODING_CHUNKED:
-			len = sprintf(buffer, "HTTP/1.1 %i %s\r\nContent-Type: %s\r\nTransfer-Encoding: %s\r\n\r\n", code, msg, "text/plain", "chunked");
+			len = sprintf(buffer, "HTTP/1.1 %i %s\r\nContent-Type: %s\r\nTransfer-Encoding: %s\r\n\r\n", code, msg, mime, "chunked");
 			break;
 	}
 	send(fd, buffer, len, 0);
