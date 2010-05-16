@@ -5,7 +5,7 @@
 #include <request/request.h>
 #include <response/response.h>
 
-typedef int (*request_cb)(const http_request const *request, response_writer *response);
+typedef int (*request_cb)(const http_request const *request, http_response *response);
 
 struct http_events_t {
 	request_cb GET;

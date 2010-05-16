@@ -8,7 +8,7 @@
 #include <services/http.h>
 #include <services/websocks.h>
 
-int http_get(const http_request const *request, response_writer *response)
+int http_get(const http_request const *request, http_response *response)
 {
 	printf("HTTP header:\n");
 	printf(" > method:     %i\n", request->method);
@@ -18,7 +18,7 @@ int http_get(const http_request const *request, response_writer *response)
 	printf(" > user-agent: %s\n", (char *)hashtable_get(&request->headers, "User-Agent"));
 	printf("\n");
 
-	response_send(request, 404, "Not Found", response);
+	//response_send(request, 404, "Not Found", response);
 	return 1;
 }
 

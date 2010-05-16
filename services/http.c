@@ -16,7 +16,7 @@
 
 struct http_context_t {
 	http_parser parser;
-	response_writer writer;
+	http_response response;
 };
 
 void *http_on_connection(int fd, void *arg)
@@ -30,7 +30,7 @@ int http_on_recv(int fd, void *context, void *arg)
 {
 	struct http_context_t *ctext = context;
 	http_parser *parser = &ctext->parser;
-	response_writer *writer = &ctext->writer;
+	http_response *response = &ctext->response;
 
 	struct service_t *service = arg;
 
@@ -46,7 +46,7 @@ int http_on_recv(int fd, void *context, void *arg)
 	if (request) {
 		struct http_events_t *events = service->events;
 		if (events && events->GET)
-			return events->GET(request, writer);
+			return events->GET(request, response);
 		else
 			return 1;
 	}
