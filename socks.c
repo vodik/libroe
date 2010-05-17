@@ -147,19 +147,12 @@ int epoll_poll(struct epoll_t *s, int timeout)
 	int nfds, n;
 
 	struct sigaction sa;
-	sigset_t emptyset, blockset;
-
-	sigemptyset(&blockset);         /* Block SIGINT */
-	sigaddset(&blockset, SIGINT);
-	sigprocmask(SIG_BLOCK, &blockset, NULL);
+	sigset_t emptyset;
 
 	sa.sa_handler = handler;        /* Establish signal handler */
 	sa.sa_flags = 0;
 	sigemptyset(&sa.sa_mask);
 	sigaction(SIGINT, &sa, NULL);
-
-	/* Initialize nfds and readfds, and perhaps do other work here */
-	/* Unblock signal, then wait for signal or ready file descriptor */
 
 	sigemptyset(&emptyset);
 
