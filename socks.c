@@ -25,6 +25,10 @@ static inline void setnonblocking(int fd)
 
 void epoll_init(struct epoll_t *s, int concurrent)
 {
+	int i;
+	for (i = 0; i < MAX_CONNECTIONS + 4; i++)
+		s->table[i].fd = 0;
+
 	s->fd = epoll_create(MAX_CONNECTIONS);
 	if (s->fd == -1)
 		die("epoll_create failed\n");
@@ -43,8 +47,8 @@ static struct fde_t *epolldata(struct epoll_t *s, int fd, int type, const struct
 
 int epoll_listen(struct epoll_t *s, int port, const struct fdcbs_t *callbacks, void *arg)
 {
-	struct sockaddr_in addr;
-	struct epoll_event evt;
+	struct sockaddr_in addr = { 0 };
+	struct epoll_event evt = { 0 };
 	int reuse_addr = 1;
 	int fd;
 
@@ -73,6 +77,35 @@ int epoll_listen(struct epoll_t *s, int port, const struct fdcbs_t *callbacks, v
 	return fd;
 }
 
+void epoll_close(struct epoll_t *s, int fd)
+{
+	if (epoll_ctl(s->fd, EPOLL_CTL_DEL, fd, NULL) == -1)
+		die("%d: epoll_ctl failed to remove connection\n", __LINE__);
+	close(fd);
+	s->table[fd].fd = 0;
+}
+
+void epoll_stop(struct epoll_t *s)
+{
+	int i;
+	struct fde_t *data;
+
+	for (i = 0; i < MAX_CONNECTIONS + 4; ++i) {
+		data = &s->table[i];
+		if (data->fd == 0)
+			continue;
+
+		if (data->type == FD_CONNECTION) {
+			if (data->callbacks && data->callbacks->ondisconn)
+				data->callbacks->ondisconn(data->context, data->arg);
+		}
+		if (epoll_ctl(s->fd, EPOLL_CTL_DEL, data->fd, NULL) == -1)
+			die("%d: epoll_ctl failed to remove connection\n", __LINE__);
+		close(data->fd);
+		data->fd = 0;
+	}
+}
+
 static void acceptconn(struct epoll_t *s, struct fde_t *data)
 {
 	struct epoll_event evt;
@@ -90,7 +123,7 @@ static void acceptconn(struct epoll_t *s, struct fde_t *data)
 	evt.events = EPOLLIN | EPOLLHUP | EPOLLET | EPOLLRDHUP;
 	evt.data.ptr = epolldata(s, cfd, FD_CONNECTION, data->callbacks, context, data->arg);
 	if (epoll_ctl(s->fd, EPOLL_CTL_ADD, cfd, &evt) == -1)
-		die("epoll_ctr failed to add a connection\n");
+		die("%d: epoll_ctr failed to add a connection\n");
 }
 
 static int handleconn(struct epoll_t *s, int event, struct fde_t *data)
@@ -101,7 +134,7 @@ static int handleconn(struct epoll_t *s, int event, struct fde_t *data)
 	return close;
 }
 
-void epoll_poll(struct epoll_t *s, int timeout)
+int epoll_poll(struct epoll_t *s, int timeout)
 {
 	struct epoll_event events[MAX_CONNECTIONS];
 	struct fde_t *data;
@@ -109,7 +142,8 @@ void epoll_poll(struct epoll_t *s, int timeout)
 
 	nfds = epoll_wait(s->fd, events, MAX_CONNECTIONS, timeout);
 	if (nfds == -1)
-		die("epoll_wait failed\n");
+		return errno;
+
 	for (n = 0; n < nfds; ++n) {
 		data = events[n].data.ptr;
 		switch (data->type) {
@@ -119,10 +153,14 @@ void epoll_poll(struct epoll_t *s, int timeout)
 			case FD_CONNECTION:
 				if (handleconn(s, events[n].events, data)) {
 					if (epoll_ctl(s->fd, EPOLL_CTL_DEL, data->fd, &events[n]) == -1)
-						die("epoll_ctl failed to remove connection\n");
+						die("%d: epoll_ctl failed to remove connection\n", __LINE__);
+					if (data->callbacks && data->callbacks->ondisconn)
+						data->callbacks->ondisconn(data->context, data->arg);
 					close(data->fd);
+					data->fd = 0;
 				}
 				break;
 		}
 	}
+	return 0;
 }

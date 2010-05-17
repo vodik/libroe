@@ -15,4 +15,6 @@ struct service_t {
 	void *events;
 };
 
+void service_end(struct epoll_t *epoll, struct service_t *service);
+
 #endif

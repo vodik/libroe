@@ -10,6 +10,7 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <signal.h>
+#include <errno.h>
 
 #include <util.h>
 #include <util/urlencode.h>
@@ -33,7 +34,7 @@ void parse_args(hashtable *table, const char *args)
 		} else if (*args == '&') {
 			*mode = '\0';
 			len = url_decode(dec, val);
-			hashtable_insert(table, arg, strndup(dec, len));
+			//hashtable_insert(table, arg, strndup(dec, len));
 			mode = arg;
 			len = 0;
 		} else {
@@ -44,7 +45,7 @@ void parse_args(hashtable *table, const char *args)
 	}
 	*mode = '\0';
 	len = url_decode(dec, val);
-	hashtable_insert(table, arg, strndup(dec, len));
+	//hashtable_insert(table, arg, strndup(dec, len));
 }
 
 /* TODO: security. This can escape root with a malformed request (browsers filter /../ though) */
@@ -82,12 +83,12 @@ int http_get(const http_request const *request, http_response *response)
 	printf("\n");
 
 	if (request->args) {
-		hashtable table;
+		/*hashtable table;
 		hashtable_init(16, NULL, &table);
 		parse_args(&table, request->args);
 
 		printf("==> Message 1: \"%s\"\n",   (char *)hashtable_get(&table, "msg1"));
-		printf("==> Message 2: \"%s\"\n\n", (char *)hashtable_get(&table, "msg2"));
+		printf("==> Message 2: \"%s\"\n\n", (char *)hashtable_get(&table, "msg2"));*/
 	}
 
 	if (strcmp(request->path, "/favicon.ico") == 0)
@@ -103,26 +104,34 @@ static struct http_events_t http_handler = {
 	.PUT  = NULL,
 };
 
+struct epoll_t epoll;
 struct service_t *services[2];
 
 static void sigterm()
 {
-	printf("term!\n");
-	free(services[0]);
+	fprintf(stderr, "HANDLED term!\n");
+
+	service_end(&epoll, services[0]);
 }
 
 int main(int argc, char *argv[])
 {
 	signal(SIGHUP, sigterm);
 	signal(SIGINT, sigterm);
+	signal(SIGTERM, sigterm);
+	signal(SIGPIPE, sigterm);
+	signal(SIGKILL, sigterm);
 
-	struct epoll_t epoll;
 	epoll_init(&epoll, 10);
 
 	services[0] = http_start(&epoll, PORT1, &http_handler);
 	//services[1] = websocks_start(&epoll, PORT2, NULL);
 
 	printf("http://localhost:%d/index.html\n", PORT1);
-	for (;;)
-		epoll_poll(&epoll, -1);
+	int ret = 0;
+	do {
+		ret = epoll_poll(&epoll, -1);
+	} while(ret != -1 && errno != EINTR);
+
+	printf("done polling\n");
 }

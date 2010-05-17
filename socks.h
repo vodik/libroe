@@ -32,6 +32,9 @@ struct epoll_t {
 
 void epoll_init(struct epoll_t *s, int concurrent);
 int epoll_listen(struct epoll_t *s, int port, const struct fdcbs_t *callbacks, void *arg);
-void epoll_poll(struct epoll_t *s, int timeout);
+void epoll_close(struct epoll_t *s, int fd);
+int epoll_poll(struct epoll_t *s, int timeout);
+
+void epoll_stop(struct epoll_t *s);
 
 #endif
