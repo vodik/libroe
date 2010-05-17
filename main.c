@@ -16,25 +16,6 @@
 #include <services/http.h>
 #include <services/websocks.h>
 
-const char *page =
-	"<html>\n"
-	"  <head>\n"
-	"    <style>\n"
-	"      body {\n"
-	"        font-family: trebuchet ms;\n"
-	"        background: #424242; \n"
-	"        color: #fff;\n"
-	"        text-align: center;\n"
-	"        margin-top:10em;\n"
-	"      }\n"
-	"    </style>\n"
-	"  </head>\n"
-	"  <body>\n"
-	"    <h1>Error 404!</h1>\n"
-	"    Page not found!\n"
-	"  </body>\n"
-	"</html>\n";
-
 /* FIXME: this is a quick and dirty hackish implementation */
 void parse_args(hashtable *table, const char *args)
 {
@@ -71,12 +52,9 @@ void send_file(http_response *response, const char *path, const char *mime)
 	int fd, filesize;
 	char *map;
 
-	fd = open(path + 1, O_RDONLY);
+	fd = open(path + 1, O_RDONLY); /* paths start with / */
 	if (fd == -1) {
-		/* TODO: simplify */
-		http_response_begin(response, TRANSFER_ENCODING_NONE, 404, "Not Found", "text/html", strlen(page));
-		http_response_write(response, page, strlen(page));
-		http_response_end(response);
+		http_response_error(response, 404, "Not Found");
 		return;
 	}
 

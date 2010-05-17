@@ -37,6 +37,16 @@ void http_response_begin(http_response *response, int encoding, int code, const 
 	send(fd, buffer, len, 0);
 }
 
+void http_response_error(http_response *response, int code, const char *msg)
+{
+	static char buffer[BUFSIZ];
+	int len, fd = response->fd;
+
+	response->sending = -1;
+	len = sprintf(buffer, "HTTP/1.1 %i %s\r\n\r\n", code, msg);
+	send(fd, buffer, len, 0);
+}
+
 void http_response_write(http_response *response, const char *data, size_t nbytes)
 {
 	static char buffer[10];
