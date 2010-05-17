@@ -63,7 +63,16 @@ static int get_path(struct state *state)
 {
 	http_request *request = state->arg;
 
-	request->path = strndup(state->buf, state->len);
+	char *mark = strchr(state->buf, '?');
+	if (mark) {
+		int off = mark - state->buf;
+		request->path = strndup(state->buf, off);
+		request->args = strndup(mark + 1, state->len - off - 1);
+	}
+	else {
+		request->path = strndup(state->buf, state->len);
+		request->args = NULL;
+	}
 
 	state->parse = get_version;
 	state->next = read_request2;
