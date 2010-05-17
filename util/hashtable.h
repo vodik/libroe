@@ -1,7 +1,7 @@
 #ifndef SMALLHTTP_UTIL_HASHTABLE
 #define SMALLHTTP_UTIL_HASHTABLE
 
-typedef struct hashtable hashashtable;
+typedef struct hashtable hashtable;
 typedef unsigned int (*hashfunc)(const char *);
 
 struct keypair;

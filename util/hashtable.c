@@ -34,7 +34,7 @@ static unsigned int sdbmhasher(const char *key)
 * @param hasher
 * @param tbl
 */
-void hashtable_init(unsigned int size, hashfunc hasher, hashashtable *tbl)
+void hashtable_init(unsigned int size, hashfunc hasher, hashtable *tbl)
 {
 	tbl->nodes = calloc(size, sizeof(struct keypair *));
 	memset(tbl->nodes, 0, sizeof(struct keypair *) * size);
@@ -47,7 +47,7 @@ void hashtable_init(unsigned int size, hashfunc hasher, hashashtable *tbl)
 * 
 * @param tbl
 */
-void hashtable_free(hashashtable *tbl, int freedata)
+void hashtable_free(hashtable *tbl, int freedata)
 {
 	int i;
 	struct keypair *node, *prev;
@@ -73,7 +73,7 @@ void hashtable_free(hashashtable *tbl, int freedata)
 * @param key
 * @param data
 */
-void hashtable_insert(hashashtable *tbl, const char *key, void *data)
+void hashtable_insert(hashtable *tbl, const char *key, void *data)
 {
 	struct keypair *node;
 	unsigned int hash = tbl->hasher(key) % tbl->size;
@@ -101,7 +101,7 @@ void hashtable_insert(hashashtable *tbl, const char *key, void *data)
 * 
 * @return 0 on success, 1 on failure.
 */
-int hashtable_remove(hashashtable *tbl, const char *key)
+int hashtable_remove(hashtable *tbl, const char *key)
 {
 	struct keypair *node, *prev = NULL;
 	unsigned int hash = tbl->hasher(key) % tbl->size;
@@ -132,7 +132,7 @@ int hashtable_remove(hashashtable *tbl, const char *key)
 * 
 * @return if present, the stored data. Otherwise NULL.
 */
-void *hashtable_get(const hashashtable *tbl, const char *key)
+void *hashtable_get(const hashtable *tbl, const char *key)
 {
 	struct keypair *node;
 	unsigned int hash = tbl->hasher(key) % tbl->size;
@@ -152,9 +152,9 @@ void *hashtable_get(const hashashtable *tbl, const char *key)
 * @param tbl
 * @param size
 */
-void hashtable_resize(hashashtable *tbl, unsigned int size)
+void hashtable_resize(hashtable *tbl, unsigned int size)
 {
-	hashashtable newtbl;
+	hashtable newtbl;
 	struct keypair* node;
 	int i;
 
