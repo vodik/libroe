@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <signal.h>
 
 #include <util.h>
 #include <util/urlencode.h>
@@ -102,12 +103,22 @@ static struct http_events_t http_handler = {
 	.PUT  = NULL,
 };
 
+struct service_t *services[2];
+
+static void sigterm()
+{
+	printf("term!\n");
+	free(services[0]);
+}
+
 int main(int argc, char *argv[])
 {
+	signal(SIGHUP, sigterm);
+	signal(SIGINT, sigterm);
+
 	struct epoll_t epoll;
 	epoll_init(&epoll, 10);
 
-	struct service_t *services[2];
 	services[0] = http_start(&epoll, PORT1, &http_handler);
 	//services[1] = websocks_start(&epoll, PORT2, NULL);
 
