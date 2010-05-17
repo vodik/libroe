@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 static inline char from_hex(char c)
 {
@@ -11,7 +12,7 @@ static inline char from_hex(char c)
 static inline char to_hex(char code)
 {
 	static char hex[] = "0123456789abcdef";
-	return hex[code & 15];
+	return hex[code & 0xf];
 }
 
 size_t url_encode(char *dest, const char *src)
@@ -25,7 +26,7 @@ size_t url_encode(char *dest, const char *src)
 		else {
 			*dest++ = '%';
 			*dest++ = to_hex(*src >> 4);
-			*dest++ = to_hex(*src & 15);
+			*dest++ = to_hex(*src & 0xf);
 			written += 2;
 		}
 		++src;

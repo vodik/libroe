@@ -11,6 +11,7 @@
 #include <sys/mman.h>
 
 #include <util.h>
+#include <util/urlencode.h>
 #include <socks.h>
 #include <services/http.h>
 #include <services/websocks.h>
@@ -34,6 +35,36 @@ const char *page =
 	"  </body>\n"
 	"</html>\n";
 
+/* FIXME: this is a quick and dirty hackish implementation */
+void parse_args(hashtable *table, const char *args)
+{
+	char arg[1024];
+	char val[1024];
+	char dec[1024 * 3];
+	char *mode = arg;
+	int len = 0;
+
+	while(*args) {
+		if (*args == '=') {
+			mode = val;
+			len = 0;
+		} else if (*args == '&') {
+			*mode = '\0';
+			len = url_decode(dec, val);
+			hashtable_insert(table, arg, strndup(dec, len));
+			mode = arg;
+			len = 0;
+		} else {
+			*mode++ = *args;
+			++len;
+		}
+		++args;
+	}
+	*mode = '\0';
+	len = url_decode(dec, val);
+	hashtable_insert(table, arg, strndup(dec, len));
+}
+
 /* TODO: security. This can escape root with a malformed request (browsers filter /../ though) */
 void send_file(http_response *response, const char *path, const char *mime)
 {
@@ -42,6 +73,7 @@ void send_file(http_response *response, const char *path, const char *mime)
 
 	fd = open(path + 1, O_RDONLY);
 	if (fd == -1) {
+		/* TODO: simplify */
 		http_response_begin(response, TRANSFER_ENCODING_NONE, 404, "Not Found", "text/html", strlen(page));
 		http_response_write(response, page, strlen(page));
 		http_response_end(response);
@@ -64,10 +96,20 @@ int http_get(const http_request const *request, http_response *response)
 	printf("HTTP header:\n");
 	printf(" > method:     %i\n", request->method);
 	printf(" > path:       %s\n", request->path);
+	printf(" > args:       %s\n", request->args);
 	printf(" > version:    HTTP/%i.%i\n", request->version_major, request->version_minor);
 	printf(" > host:       %s\n", (char *)hashtable_get(&request->headers, "Host"));
 	printf(" > user-agent: %s\n", (char *)hashtable_get(&request->headers, "User-Agent"));
 	printf("\n");
+
+	if (request->args) {
+		hashtable table;
+		hashtable_init(16, NULL, &table);
+		parse_args(&table, request->args);
+
+		printf("==> Message 1: \"%s\"\n",   (char *)hashtable_get(&table, "msg1"));
+		printf("==> Message 2: \"%s\"\n\n", (char *)hashtable_get(&table, "msg2"));
+	}
 
 	if (strcmp(request->path, "/favicon.ico") == 0)
 		send_file(response, request->path, "image/vnd.microsoft.icon");

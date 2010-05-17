@@ -32,6 +32,7 @@ int http_on_recv(int fd, void *context, void *arg)
 	struct http_context_t *ctext = context;
 	http_parser *parser = &ctext->parser;
 	http_response *response = &ctext->response;
+	int result = 1;
 
 	struct service_t *service = arg;
 
@@ -51,22 +52,16 @@ int http_on_recv(int fd, void *context, void *arg)
 			switch (request->method) {
 				case HTTP_GET:
 					if (events->GET)
-						return events->GET(request, response);
-					return 1;
+						result = events->GET(request, response);
 				case HTTP_POST:
 					if (events->POST)
-						return events->POST(request, response);
-					return 1;
+						result = events->POST(request, response);
 				case HTTP_PUT:
 					if (events->PUT)
-						return events->PUT(request, response);
-					return 1;
-				default:
-					return 1;
+						result = events->PUT(request, response);
 			}
 		}
-		else
-			return 1;
+		return result;
 	}
 	return 0;
 }
