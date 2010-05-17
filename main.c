@@ -1,4 +1,4 @@
-#define PORT1 22345
+#define PORT1 44567
 #define PORT2 33456
 
 #include <stdlib.h>
@@ -104,23 +104,20 @@ static struct http_events_t http_handler = {
 	.PUT  = NULL,
 };
 
+int running = 0;
 struct epoll_t epoll;
 struct service_t *services[2];
 
 static void sigterm()
 {
 	fprintf(stderr, "HANDLED term!\n");
-
-	service_end(&epoll, services[0]);
+	running = 1;
 }
 
 int main(int argc, char *argv[])
 {
-	signal(SIGHUP, sigterm);
 	signal(SIGINT, sigterm);
 	signal(SIGTERM, sigterm);
-	signal(SIGPIPE, sigterm);
-	signal(SIGKILL, sigterm);
 
 	epoll_init(&epoll, 10);
 
@@ -128,10 +125,11 @@ int main(int argc, char *argv[])
 	//services[1] = websocks_start(&epoll, PORT2, NULL);
 
 	printf("http://localhost:%d/index.html\n", PORT1);
-	int ret = 0;
-	do {
-		ret = epoll_poll(&epoll, -1);
-	} while(ret != -1 && errno != EINTR);
 
-	printf("done polling\n");
+	while(running == 0)
+		running = epoll_poll(&epoll, -1);
+	
+	printf("==> ending - %d, %s", running, strerror(running));
+	service_end(&epoll, services[0]);
+	epoll_stop(&epoll);
 }

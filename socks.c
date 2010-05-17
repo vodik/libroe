@@ -10,6 +10,7 @@
 #include <sys/epoll.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <signal.h>
 
 #include "util.h"
 
@@ -104,6 +105,8 @@ void epoll_stop(struct epoll_t *s)
 		close(data->fd);
 		data->fd = 0;
 	}
+	close(s->fd);
+	s->fd = 0;
 }
 
 static void acceptconn(struct epoll_t *s, struct fde_t *data)
@@ -134,15 +137,41 @@ static int handleconn(struct epoll_t *s, int event, struct fde_t *data)
 	return close;
 }
 
+static int done = 0;
+static void handler(int sig) { done = 1;  }
+
 int epoll_poll(struct epoll_t *s, int timeout)
 {
 	struct epoll_event events[MAX_CONNECTIONS];
 	struct fde_t *data;
 	int nfds, n;
 
-	nfds = epoll_wait(s->fd, events, MAX_CONNECTIONS, timeout);
-	if (nfds == -1)
-		return errno;
+	struct sigaction sa;
+	sigset_t emptyset, blockset;
+
+	sigemptyset(&blockset);         /* Block SIGINT */
+	sigaddset(&blockset, SIGINT);
+	sigprocmask(SIG_BLOCK, &blockset, NULL);
+
+	sa.sa_handler = handler;        /* Establish signal handler */
+	sa.sa_flags = 0;
+	sigemptyset(&sa.sa_mask);
+	sigaction(SIGINT, &sa, NULL);
+
+	/* Initialize nfds and readfds, and perhaps do other work here */
+	/* Unblock signal, then wait for signal or ready file descriptor */
+
+	sigemptyset(&emptyset);
+
+	nfds = epoll_pwait(s->fd, events, MAX_CONNECTIONS, timeout, &emptyset);
+	if (done == 1) {
+		done = 0;
+		return 1;
+	}
+
+	if (nfds == -1) {
+		return errno == EINTR ? 0 : errno;
+	}
 
 	for (n = 0; n < nfds; ++n) {
 		data = events[n].data.ptr;
