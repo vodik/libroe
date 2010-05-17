@@ -111,6 +111,7 @@ int main(int argc, char *argv[])
 	services[0] = http_start(&epoll, PORT1, &http_handler);
 	//services[1] = websocks_start(&epoll, PORT2, NULL);
 
+	printf("http://localhost:%d/index.html\n", PORT1);
 	for (;;)
 		epoll_poll(&epoll, -1);
 }
