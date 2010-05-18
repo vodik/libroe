@@ -107,12 +107,12 @@ static struct http_events_t http_handler = {
 int main(int argc, char *argv[])
 {
 	poll_mgmt_t mgmt;
-	struct service_t *services[2];
+	struct service_t services[2];
 
 	poll_mgmt_start(&mgmt, 10);
 
-	services[0] = http_start(&mgmt, PORT1, &http_handler);
-	//services[1] = websocks_start(&mgmt, PORT2, NULL);
+	http_start(&services[0], &mgmt, PORT1, &http_handler);
+	//websocks_start(&services[1], &mgmt, PORT2, NULL);
 
 	printf("http://localhost:%d/index.html\n", PORT1);
 

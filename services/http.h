@@ -13,6 +13,6 @@ struct http_events_t {
 	request_cb POST;
 };
 
-struct service_t *http_start(poll_mgmt_t *epoll, int port, struct http_events_t *events);
+void http_start(struct service_t *http, poll_mgmt_t *mgmt, int port, struct http_events_t *events);
 
 #endif

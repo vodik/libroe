@@ -80,12 +80,22 @@ void http_on_disconnection(void *context, void *arg)
 	.ondisconn	= http_on_disconnection,
 };*/
 
-struct service_t *http_start(poll_mgmt_t *mgmt, int port, struct http_events_t *events)
+void http_on_recv2(const char *msg, size_t nbytes)
 {
-	struct service_t *http = malloc(sizeof(struct service_t));
+	printf("got: %s\n", msg);
+}
+
+static struct fd_cbs_t http_callbacks = {
+	.onopen		= NULL,
+	.onmessage	= http_on_recv2,
+	.onclose	= NULL,
+};
+
+
+void http_start(struct service_t *http, poll_mgmt_t *mgmt, int port, struct http_events_t *events)
+{
 	http->type = SERVICE_HTTP;
-	http->fd = poll_mgmt_listen(mgmt, port);//, &http_callbacks, http);
+	http->fd = poll_mgmt_listen(mgmt, port, &http_callbacks);//, &http_callbacks, http);
 	http->mgmt = mgmt;
 	http->events = events;
-	return http;
 }

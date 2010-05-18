@@ -32,11 +32,12 @@ static inline void socket_set_reuseaddr(int fd, int state)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void *poll_mgmt_mkstore(poll_mgmt_t *mngr, int fd, int type)
+static void *poll_mgmt_mkstore(poll_mgmt_t *mngr, int fd, int type, struct fd_cbs_t *cbs)
 {
 	struct fd_evt_t *data = malloc(sizeof(struct fd_evt_t));
 	data->fd = fd;
 	data->type = type;
+	data->cbs = cbs;
 
 	skipset_add(&mngr->store, fd, data);
 	return data;
@@ -65,7 +66,7 @@ static void poll_mgmt_accept(poll_mgmt_t *mngr, struct fd_evt_t *data)
 	/* FIXME: raise event here */
 
 	evt.events = EPOLLIN;
-	evt.data.ptr = poll_mgmt_mkstore(mngr, fd, CONN_CONNECTION);
+	evt.data.ptr = poll_mgmt_mkstore(mngr, fd, CONN_CONNECTION, data->cbs);
 	if (epoll_ctl(mngr->fd, EPOLL_CTL_ADD, fd, &evt) == -1)
 		die("epoll_ctr failed to add a connection\n");
 }
@@ -78,7 +79,7 @@ static void poll_mgmt_handle(poll_mgmt_t *mngr, struct fd_evt_t *data)
 	if (r != 0) {
 		printf("%d: oh my god!\n", data->fd);
 		buf[r] = '\0';
-		printf("%s", buf);
+		data->cbs->onmessage(buf, r);
 	}
 
 	printf("killing!\n");
@@ -105,7 +106,7 @@ void poll_mgmt_stop(poll_mgmt_t *mngr)
 	close(mngr->fd);
 }
 
-int poll_mgmt_listen(poll_mgmt_t *mngr, int port)
+int poll_mgmt_listen(poll_mgmt_t *mngr, int port, struct fd_cbs_t *cbs)
 {
 	struct sockaddr_in addr;
 	struct epoll_event evt;
@@ -129,7 +130,7 @@ int poll_mgmt_listen(poll_mgmt_t *mngr, int port)
 		die("listen on port %d failed\n", port);
 
 	evt.events = EPOLLIN | EPOLLHUP;
-	evt.data.ptr = poll_mgmt_mkstore(mngr, fd, CONN_LISTENING);
+	evt.data.ptr = poll_mgmt_mkstore(mngr, fd, CONN_LISTENING, cbs);
 	if (epoll_ctl(mngr->fd, EPOLL_CTL_ADD, fd, &evt) == -1)
 		die("epoll_ctl failed to add listening connection on port %d\n", port);
 	
