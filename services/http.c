@@ -95,7 +95,6 @@ static struct fd_cbs_t http_callbacks = {
 	.onclose	= http_on_close,
 };
 
-
 void http_start(struct service_t *http, poll_mgmt_t *mgmt, int port, struct http_events_t *events)
 {
 	http->type = SERVICE_HTTP;
