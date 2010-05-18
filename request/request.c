@@ -3,9 +3,8 @@
 #include <stdlib.h>
 #include <util/hashtable.h>
 
-void http_request_init(http_request *request, int fd)
+void http_request_init(http_request *request)
 {
-	request->fd = fd;
 	hashtable_init(&request->headers, 16, NULL);
 }
 

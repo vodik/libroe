@@ -283,9 +283,9 @@ static inline void startstate(struct state *state, void *arg)
 * 
 * @param parser
 */
-void http_parser_init(http_parser *parser, int fd)
+void http_parser_init(http_parser *parser)
 {
-	http_request_init(&parser->request, fd);
+	http_request_init(&parser->request);
 	startstate(&parser->state, &parser->request);
 }
 

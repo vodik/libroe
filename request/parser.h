@@ -37,7 +37,7 @@ typedef struct {
 	struct state state;
 } http_parser;
 
-void http_parser_init(http_parser *, int fd);
+void http_parser_init(http_parser *);
 void http_parser_free(http_parser *);
 int http_parser_read(http_parser *, const char *buf, int len);
 const http_request *http_parser_done(http_parser *);

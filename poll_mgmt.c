@@ -64,6 +64,8 @@ static void poll_mgmt_accept(poll_mgmt_t *mngr, struct fd_evt_t *data)
 	socket_set_nonblock(fd);
 
 	/* FIXME: raise event here */
+	if (data->cbs && data->cbs->onopen)
+		data->cbs->onopen(&data->context);
 
 	evt.events = EPOLLIN;
 	evt.data.ptr = poll_mgmt_mkstore(mngr, fd, CONN_CONNECTION, data->cbs);
@@ -73,13 +75,13 @@ static void poll_mgmt_accept(poll_mgmt_t *mngr, struct fd_evt_t *data)
 
 static void poll_mgmt_handle(poll_mgmt_t *mngr, struct fd_evt_t *data)
 {
-	char buf[1024 * 8];
+	char buf[POLL_MGMT_BUFF_SIZE];
 
-	int r = read(data->fd, buf, 1024 * 8);
-	if (r != 0) {
+	int r = read(data->fd, buf, POLL_MGMT_BUFF_SIZE);
+	if (r != 0 && data->cbs && data->cbs->onopen) {
 		printf("%d: oh my god!\n", data->fd);
 		buf[r] = '\0';
-		data->cbs->onmessage(buf, r);
+		data->cbs->onmessage(&data->context, buf, r);
 	}
 
 	printf("killing!\n");
@@ -139,6 +141,7 @@ int poll_mgmt_listen(poll_mgmt_t *mngr, int port, struct fd_cbs_t *cbs)
 
 void poll_mgmt_close(poll_mgmt_t *mngr, int fd)
 {
+	die("poll_mgmt_close has not been implemented");
 }
 
 /* FIXME */

@@ -9,9 +9,16 @@ enum {
 	CONN_LISTENING,
 };
 
-typedef void (*onopen_cb)();
-typedef void (*onmessage_cb)(const char *msg, size_t nbytes);
-typedef void (*onclose_cb)();
+typedef void (*context_free_cb)(void *data);
+
+struct fd_context_t {
+	void *data;
+	context_free_cb context_free;
+};
+
+typedef void (*onopen_cb)(struct fd_context_t *context);
+typedef void (*onmessage_cb)(struct fd_context_t *context, const char *msg, size_t nbytes);
+typedef void (*onclose_cb)(struct fd_context_t *context);
 
 struct fd_cbs_t {
 	onopen_cb onopen;
@@ -23,6 +30,7 @@ struct fd_evt_t {
 	int fd;
 	int type;
 	struct fd_cbs_t *cbs;
+	struct fd_context_t context;
 };
 
 typedef struct {

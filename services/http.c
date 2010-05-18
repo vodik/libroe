@@ -15,39 +15,48 @@
 #include <util.h>
 
 struct http_context_t {
+	int fd;
 	http_parser parser;
 	http_response response;
 };
 
-void *http_on_connection(int fd, void *arg)
+struct http_context_t *http_context_new()
 {
 	struct http_context_t *context = malloc(sizeof(struct http_context_t));
-	http_parser_init(&context->parser, fd);
-	http_response_init(&context->response, fd);
+	http_parser_init(&context->parser);
+	http_response_init(&context->response, context->fd);
 	return context;
 }
 
-int http_on_recv(int fd, void *context, void *arg)
+void http_context_free(void *data)
 {
-	struct http_context_t *ctext = context;
-	http_parser *parser = &ctext->parser;
-	http_response *response = &ctext->response;
-	int result = 1;
+	struct http_context_t *context = data;
+	http_parser_free(&context->parser);
+	http_response_end(&context->response);
+	free(data);
+}
 
-	struct service_t *service = arg;
+////////////////////////////////////////////////////////////////////////////////
 
-	char buf[BUFSIZ];
-	ssize_t r = 1;
-	const http_request const *request;
+void http_on_open(struct fd_context_t *context)
+{
+	context->data = http_context_new();
+	context->context_free = http_context_free;
+}
 
-	while (r > 0) {
-		r = read(fd, buf, BUFSIZ);
-		http_parser_read(parser, buf, r);
-	}
-	request = http_parser_done(parser);
+void http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes)
+{
+	struct http_context_t *http_context = context->data;
+	http_parser *parser = &http_context->parser;
+	http_response *response = &http_context->response;
 
-	if (request) {
-		struct http_events_t *events = service->events;
+	printf("here - bytes: %d/%d\n%s---\n", nbytes, strlen(msg), msg);
+	http_parser_read(parser, msg, nbytes);
+	printf("--> reading done\n");
+
+	if (http_parser_done(parser)) {
+		printf("got request\n");
+		/*struct http_events_t *events = service->events;
 		if (events) {
 			switch (request->method) {
 				case HTTP_GET:
@@ -60,18 +69,18 @@ int http_on_recv(int fd, void *context, void *arg)
 					if (events->PUT)
 						result = events->PUT(request, response);
 			}
-		}
-		return result;
+		}*/
+		//return result;
 	}
-	return 0;
+	//return 0;
 }
 
-void http_on_disconnection(void *context, void *arg)
+void http_on_close(struct fd_context_t *context)
 {
-	struct http_context_t *ctext = context;
+	/*struct http_context_t *ctext = context;
 	http_parser_free(&ctext->parser);
 	http_response_end(&ctext->response);
-	free(ctext);
+	free(ctext);*/
 }
 
 /*static struct fdcbs_t http_callbacks = {
@@ -80,15 +89,10 @@ void http_on_disconnection(void *context, void *arg)
 	.ondisconn	= http_on_disconnection,
 };*/
 
-void http_on_recv2(const char *msg, size_t nbytes)
-{
-	printf("got: %s\n", msg);
-}
-
 static struct fd_cbs_t http_callbacks = {
-	.onopen		= NULL,
-	.onmessage	= http_on_recv2,
-	.onclose	= NULL,
+	.onopen		= http_on_open,
+	.onmessage	= http_on_message,
+	.onclose	= http_on_close,
 };
 
 
