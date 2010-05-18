@@ -17,8 +17,9 @@ void ws_on_open(struct fd_context_t *context)
 {
 }
 
-void ws_on_message(struct fd_context_t *context, const char *msg, size_t nbytes)
+int ws_on_message(struct fd_context_t *context, const char *msg, size_t nbytes)
 {
+	return 0;
 }
 
 void ws_on_close(struct fd_context_t *context)

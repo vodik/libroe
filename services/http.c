@@ -15,17 +15,15 @@
 #include <util.h>
 
 struct http_context_t {
-	int fd;
 	http_parser parser;
 	http_response response;
 };
 
-struct http_context_t *http_context_new()
+struct http_context_t *http_context_new(int fd)
 {
 	struct http_context_t *context = malloc(sizeof(struct http_context_t));
 	http_parser_init(&context->parser);
-	http_response_init(&context->response, context->fd);
-	context->fd = 99;
+	http_response_init(&context->response, fd);
 	return context;
 }
 
@@ -42,11 +40,11 @@ void http_context_free(void *data)
 void http_on_open(struct fd_context_t *context)
 {
 	printf("--> opening\n");
-	context->data = http_context_new();
+	context->data = http_context_new(context->fd);
 	context->context_free = http_context_free;
 }
 
-void http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes)
+int http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes)
 {
 	struct http_context_t *http_context = context->data;
 	http_parser *parser = &http_context->parser;
@@ -60,7 +58,7 @@ void http_on_message(struct fd_context_t *context, const char *msg, size_t nbyte
 	int result = 0;
 
 	if ((request = http_parser_done(parser))) {
-		printf("got request\n");
+		printf("%d: got request\n", context->fd);
 		struct http_events_t *events = context->shared;
 		if (events) {
 			switch (request->method) {
@@ -78,9 +76,9 @@ void http_on_message(struct fd_context_t *context, const char *msg, size_t nbyte
 					break;
 			}
 		}
-		//return result;
+		return result;
 	}
-	//return 0;
+	return 1;
 }
 
 void http_on_close(struct fd_context_t *context)

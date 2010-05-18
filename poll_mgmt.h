@@ -12,13 +12,14 @@ enum {
 typedef void (*context_free_cb)(void *data);
 
 struct fd_context_t {
+	int fd;
 	void *data;
 	void *shared;
 	context_free_cb context_free;
 };
 
 typedef void (*onopen_cb)(struct fd_context_t *context);
-typedef void (*onmessage_cb)(struct fd_context_t *context, const char *msg, size_t nbytes);
+typedef int (*onmessage_cb)(struct fd_context_t *context, const char *msg, size_t nbytes);
 typedef void (*onclose_cb)(struct fd_context_t *context);
 
 struct fd_cbs_t {

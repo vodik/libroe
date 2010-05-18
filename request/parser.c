@@ -136,7 +136,7 @@ static int get_value(struct state *state)
 {
 	http_request *request = state->arg;
 
-	//hashtable_insert(&request->headers, state->tmp, strndup(state->buf, state->len));
+	hashtable_add(&request->headers, state->tmp, strndup(state->buf, state->len));
 	free(state->tmp);
 	state->parse = get_header;
 	state->next = read_header;

@@ -83,6 +83,7 @@ static void poll_mgmt_accept(poll_mgmt_t *mngr, struct fd_evt_t *data)
 
 	struct fd_evt_t *newdata = poll_mgmt_mkstore(mngr, fd, CONN_CONNECTION, data->cbs, data->shared);
 	if (newdata->cbs && newdata->cbs->onopen) {
+		newdata->context.fd = fd;
 		newdata->context.shared = newdata->shared;
 		newdata->cbs->onopen(&newdata->context);
 	}
@@ -97,27 +98,30 @@ static void poll_mgmt_accept(poll_mgmt_t *mngr, struct fd_evt_t *data)
 static void poll_mgmt_handle(poll_mgmt_t *mngr, struct fd_evt_t *data)
 {
 	char buf[POLL_MGMT_BUFF_SIZE];
+	int keepalive = 0;
 
 	int r = read(data->fd, buf, POLL_MGMT_BUFF_SIZE);
 	if (r != 0 && data->cbs && data->cbs->onopen) {
 		printf("%d: oh my god!\n", data->fd);
 		buf[r] = '\0';
 		assert(data->context.data != 0);
-		data->cbs->onmessage(&data->context, buf, r);
+		keepalive = data->cbs->onmessage(&data->context, buf, r);
 	}
 
-	if (data->cbs && data->cbs->onclose)
-		data->cbs->onclose(&data->context);
+	if (!keepalive) {
+		if (data->cbs && data->cbs->onclose)
+			data->cbs->onclose(&data->context);
 
-	printf("killing!\n");
-	if (epoll_ctl(mngr->fd, EPOLL_CTL_DEL, data->fd, NULL) == -1)
-		die("%d: epoll_ctl failed to remove connection\n", __LINE__);
+		printf("--> closing fd!\n");
+		if (epoll_ctl(mngr->fd, EPOLL_CTL_DEL, data->fd, NULL) == -1)
+			die("%d: epoll_ctl failed to remove connection\n", __LINE__);
 
-	if (data->context.context_free)
-		data->context.context_free(data->context.data);
+		if (data->context.context_free)
+			data->context.context_free(data->context.data);
 
-	close(data->fd);
-	poll_mgmt_removestore(mngr, data->fd);
+		close(data->fd);
+		poll_mgmt_removestore(mngr, data->fd);
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////////

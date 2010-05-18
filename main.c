@@ -54,6 +54,7 @@ void send_file(http_response *response, const char *path, const char *mime)
 	int fd, filesize;
 	char *map;
 
+	printf("--> sending file\n");
 	fd = open(path + 1, O_RDONLY); /* paths start with / */
 	if (fd == -1) {
 		http_response_error(response, 404, "Not Found");
@@ -66,6 +67,7 @@ void send_file(http_response *response, const char *path, const char *mime)
 	http_response_begin(response, TRANSFER_ENCODING_NONE, 200, "OK", mime, filesize);
 	http_response_write(response, map, filesize);
 	http_response_end(response);
+	printf("--> sent\n");
 
 	munmap(map, filesize);
 	close(fd);
@@ -95,7 +97,7 @@ int http_get(const http_request const *request, http_response *response)
 		send_file(response, request->path, "image/vnd.microsoft.icon");
 	else
 		send_file(response, request->path, "text/html");
-	return 1;
+	return 0;
 }
 
 static struct http_events_t http_handler = {
@@ -118,10 +120,10 @@ int main(int argc, char *argv[])
 
 	int running = 0;
 	while(running == 0) {
-		printf("--> wait\n");
+		printf("--> loop start\n");
 		running = poll_mgmt_poll(&mgmt, -1);
 		if (running == 0)
-			printf("--> step - %d, %s\n", running, strerror(running));
+			printf("--> loop repeat - %d, %s\n", running, strerror(running));
 	}
 	
 	printf("==> ending - %d, %s\n", running, strerror(running));
