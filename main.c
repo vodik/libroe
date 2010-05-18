@@ -126,10 +126,14 @@ int main(int argc, char *argv[])
 
 	printf("http://localhost:%d/index.html\n", PORT1);
 
-	while(running == 0)
+	while(running == 0) {
+		printf("--> wait\n");
 		running = epoll_poll(&epoll, -1);
+		if (running == 0)
+			printf("--> step - %d, %s\n", running, strerror(running));
+	}
 	
-	printf("==> ending - %d, %s", running, strerror(running));
+	printf("==> ending - %d, %s\n", running, strerror(running));
 	service_end(&epoll, services[0]);
 	epoll_stop(&epoll);
 }
