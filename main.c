@@ -14,12 +14,12 @@
 
 #include <util.h>
 #include <util/urlencode.h>
-#include <socks.h>
+#include <poll_mgmt.h>
 #include <services/http.h>
 #include <services/websocks.h>
 
 /* FIXME: this is a quick and dirty hackish implementation */
-void parse_args(hashtable *table, const char *args)
+void parse_args(hashtable_t *table, const char *args)
 {
 	char arg[1024];
 	char val[1024];
@@ -34,7 +34,7 @@ void parse_args(hashtable *table, const char *args)
 		} else if (*args == '&') {
 			*mode = '\0';
 			len = url_decode(dec, val);
-			//hashtable_insert(table, arg, strndup(dec, len));
+			hashtable_add(table, arg, strndup(dec, len));
 			mode = arg;
 			len = 0;
 		} else {
@@ -45,7 +45,7 @@ void parse_args(hashtable *table, const char *args)
 	}
 	*mode = '\0';
 	len = url_decode(dec, val);
-	//hashtable_insert(table, arg, strndup(dec, len));
+	hashtable_add(table, arg, strndup(dec, len));
 }
 
 /* TODO: security. This can escape root with a malformed request (browsers filter /../ though) */
@@ -54,6 +54,7 @@ void send_file(http_response *response, const char *path, const char *mime)
 	int fd, filesize;
 	char *map;
 
+	printf("--> sending file\n");
 	fd = open(path + 1, O_RDONLY); /* paths start with / */
 	if (fd == -1) {
 		http_response_error(response, 404, "Not Found");
@@ -66,6 +67,7 @@ void send_file(http_response *response, const char *path, const char *mime)
 	http_response_begin(response, TRANSFER_ENCODING_NONE, 200, "OK", mime, filesize);
 	http_response_write(response, map, filesize);
 	http_response_end(response);
+	printf("--> sent\n");
 
 	munmap(map, filesize);
 	close(fd);
@@ -83,19 +85,20 @@ int http_get(const http_request const *request, http_response *response)
 	printf("\n");
 
 	if (request->args) {
-		/*hashtable table;
-		hashtable_init(16, NULL, &table);
+		hashtable_t table;
+		hashtable_init(&table, 16, NULL);
 		parse_args(&table, request->args);
 
 		printf("==> Message 1: \"%s\"\n",   (char *)hashtable_get(&table, "msg1"));
-		printf("==> Message 2: \"%s\"\n\n", (char *)hashtable_get(&table, "msg2"));*/
+		printf("==> Message 2: \"%s\"\n\n", (char *)hashtable_get(&table, "msg2"));
+		hashtable_cleanup(&table, free);
 	}
 
 	if (strcmp(request->path, "/favicon.ico") == 0)
 		send_file(response, request->path, "image/vnd.microsoft.icon");
 	else
 		send_file(response, request->path, "text/html");
-	return 1;
+	return 0;
 }
 
 static struct http_events_t http_handler = {
@@ -104,36 +107,27 @@ static struct http_events_t http_handler = {
 	.PUT  = NULL,
 };
 
-int running = 0;
-struct epoll_t epoll;
-struct service_t *services[2];
-
-static void sigterm()
-{
-	fprintf(stderr, "HANDLED term!\n");
-	running = 1;
-}
-
 int main(int argc, char *argv[])
 {
-	signal(SIGINT, sigterm);
-	signal(SIGTERM, sigterm);
+	poll_mgmt_t mgmt;
+	struct service_t services[2];
 
-	epoll_init(&epoll, 10);
+	poll_mgmt_start(&mgmt, 10);
 
-	services[0] = http_start(&epoll, PORT1, &http_handler);
-	//services[1] = websocks_start(&epoll, PORT2, NULL);
+	http_start(&services[0], &mgmt, PORT1, &http_handler);
+	//websocks_start(&services[1], &mgmt, PORT2, NULL);
 
 	printf("http://localhost:%d/index.html\n", PORT1);
 
+	int running = 0;
 	while(running == 0) {
-		printf("--> wait\n");
-		running = epoll_poll(&epoll, -1);
+		printf("--> loop start\n");
+		running = poll_mgmt_poll(&mgmt, -1);
 		if (running == 0)
-			printf("--> step - %d, %s\n", running, strerror(running));
+			printf("--> loop repeat - %d, %s\n", running, strerror(running));
 	}
 	
 	printf("==> ending - %d, %s\n", running, strerror(running));
-	service_end(&epoll, services[0]);
-	epoll_stop(&epoll);
+	//service_end(&mgmt, services[0]);
+	poll_mgmt_stop(&mgmt);
 }

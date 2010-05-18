@@ -13,32 +13,31 @@
 
 #include "util.h"
 
-void *ws_on_connection(int fd, void *arg)
-{
-	return NULL;
-}
-
-int ws_on_recv(int fd, void *context, void *arg)
-{
-	return 1;
-}
-
-void ws_on_disconnection(void *context, void *arg)
+void ws_on_open(struct fd_context_t *context)
 {
 }
 
-static struct fdcbs_t ws_callbacks = {
-	.onconn		= ws_on_connection,
-	.onrecv		= ws_on_recv,
-	.ondisconn	= ws_on_disconnection,
+int ws_on_message(struct fd_context_t *context, const char *msg, size_t nbytes)
+{
+	return 0;
+}
+
+void ws_on_close(struct fd_context_t *context)
+{
+}
+
+static struct fd_cbs_t ws_callbacks = {
+	.onopen		= ws_on_open,
+	.onmessage	= ws_on_message,
+	.onclose	= ws_on_close,
 };
 
-struct service_t *websocks_start(struct epoll_t *epoll, int port, struct ws_events_t *events)
+struct service_t *websocks_start(poll_mgmt_t *mgmt, int port, struct ws_events_t *events)
 {
 	struct service_t *ws = malloc(sizeof(struct service_t));
 	ws->type = SERVICE_WEBSOCKS;
-	ws->fd = epoll_listen(epoll, port, &ws_callbacks, ws);
-	ws->epoll = epoll;
+	ws->fd = poll_mgmt_listen(mgmt, port, &ws_callbacks, events);//, &ws_callbacks, ws);
+	ws->mgmt = mgmt;
 	ws->events = events;
 	return ws;
 }

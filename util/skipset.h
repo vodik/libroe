@@ -1,12 +1,9 @@
-#ifndef SMALLHTTP_SKIPSET_H
-#define SMALLHTTP_SKIPSET_H
+#ifndef SMALLHTTP_UTIL_SKIPSET
+#define SMALLHTTP_UTIL_SKIPSET
+
+#include "common.h"
 
 #define P 0.5
-
-struct keyval_pair_t {
-	int key;
-	void *val;
-};
 
 struct skipnode_t {
 	struct keyval_pair_t keypair;
@@ -19,8 +16,6 @@ typedef struct {
 	int height;
 	int length;
 } skipset_t;
-
-typedef void (*cleanup_func)(void *ptr);
 
 void skipset_init(skipset_t *set, int height);
 void skipset_cleanup(skipset_t *set, cleanup_func clean);

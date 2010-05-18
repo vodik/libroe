@@ -1,24 +1,25 @@
 #ifndef SMALLHTTP_UTIL_HASHTABLE
 #define SMALLHTTP_UTIL_HASHTABLE
 
-typedef struct hashtable hashtable;
-typedef unsigned int (*hashfunc)(const char *);
+#include "common.h"
 
-struct keypair;
-
-struct hashtable {
-	unsigned int size;
-	struct keypair **nodes;
-	hashfunc hasher;
+struct hashnode_t {
+	char *key;
+	void *val;
+	struct hashnode_t *next;
 };
 
-void hashtable_init(unsigned int size, hashfunc hasher, hashtable *tbl);
-void hashtable_free(hashtable *, int freedata);
+typedef struct {
+	unsigned int size;
+	struct hashnode_t **nodes;
+	hashfunc hasher;
+} hashtable_t;
 
-void hashtable_insert(hashtable *, const char *key, void *data);
-int hashtable_remove(hashtable *, const char *key);
-void *hashtable_get(const hashtable *, const char *key);
+void hashtable_init(hashtable_t *table, unsigned int size, hashfunc hasher);
+void hashtable_cleanup(hashtable_t *table, cleanup_func clean);
 
-void hashtable_resize(hashtable *, unsigned int size);
+void hashtable_add(hashtable_t *table, const char *key, void *data);
+void *hashtable_get(const hashtable_t *table, const char *key);
+void *hashtable_remove(hashtable_t *table, const char *key);
 
 #endif

@@ -3,10 +3,11 @@
 #include <stdlib.h>
 #include <util/hashtable.h>
 
-void http_request_init(http_request *request, int fd)
+void http_request_init(http_request *request)
 {
-	request->fd = fd;
-	hashtable_init(16, NULL, &request->headers);
+	request->path = NULL;
+	request->args = NULL;
+	hashtable_init(&request->headers, 16, NULL);
 }
 
 /* FIXME: clean up all hashtable entries */
@@ -16,5 +17,5 @@ void http_request_free(http_request *request)
 		free(request->path);
 	if (request->args)
 		free(request->args);
-	hashtable_free(&request->headers, 1);
+	hashtable_cleanup(&request->headers, free);
 }

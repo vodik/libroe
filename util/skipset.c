@@ -41,15 +41,15 @@ void skipset_init(skipset_t *set, int height)
 
 void skipset_cleanup(skipset_t *set, cleanup_func clean)
 {
-	struct skipnode_t *old, *node = set->header->links[0];
+	struct skipnode_t *prev, *node = set->header->links[0];
 
 	while (node != NULL) {
-		old = node;
+		prev = node;
 		node = node->links[0];
 		if (clean)
-			clean(old->keypair.val);
-		free(old->links);
-		free(old);
+			clean(prev->keypair.val);
+		free(prev->links);
+		free(prev);
 	}
 	free(set->header->links);
 	free(set->header);

@@ -136,7 +136,7 @@ static int get_value(struct state *state)
 {
 	http_request *request = state->arg;
 
-	//hashtable_insert(&request->headers, state->tmp, strndup(state->buf, state->len));
+	hashtable_add(&request->headers, state->tmp, strndup(state->buf, state->len));
 	free(state->tmp);
 	state->parse = get_header;
 	state->next = read_header;
@@ -283,9 +283,9 @@ static inline void startstate(struct state *state, void *arg)
 * 
 * @param parser
 */
-void http_parser_init(http_parser *parser, int fd)
+void http_parser_init(http_parser *parser)
 {
-	http_request_init(&parser->request, fd);
+	http_request_init(&parser->request);
 	startstate(&parser->state, &parser->request);
 }
 

@@ -16,6 +16,7 @@ void http_response_init(http_response *response, int fd)
 {
 	response->sending = 0;
 	response->fd = fd;
+	response->encoding = TRANSFER_ENCODING_NONE;
 }
 
 void http_response_begin(http_response *response, int encoding, int code, const char *msg, const char *mime, int content_length)
