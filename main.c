@@ -21,9 +21,9 @@
 /* FIXME: this is a quick and dirty hackish implementation */
 void parse_args(hashtable_t *table, const char *args)
 {
-	char arg[1024];
-	char val[1024];
-	char dec[1024 * 3];
+	char arg[512];
+	char val[512];
+	char dec[512 * 3];
 	char *mode = arg;
 	int len = 0;
 
@@ -73,6 +73,14 @@ void send_file(http_response *response, const char *path, const char *mime)
 	close(fd);
 }
 
+/** 
+* @brief 
+* 
+* @param request
+* @param response
+* 
+* @return 
+*/
 int http_get(const http_request const *request, http_response *response)
 {
 	printf("HTTP header:\n");

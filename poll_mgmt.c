@@ -15,6 +15,11 @@
 #include "util.h"
 #include "config.h"
 
+/** 
+* @brief Set a socket so it won't block
+* 
+* @param fd The file descriptor of the socket
+*/
 static inline void socket_set_nonblock(int fd)
 {
 	int opts = fcntl(fd, F_GETFL);
@@ -25,12 +30,23 @@ static inline void socket_set_nonblock(int fd)
 		die("fcntl setfd failed\n");
 }
 
+/** 
+* @brief Set a socket to reuse its addr
+* 
+* @param fd The file descriptor of the socket
+* @param state State to set SO_REUSEADDR to; one activates, zero deactivates.
+*/
 static inline void socket_set_reuseaddr(int fd, int state)
 {
 	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &state, sizeof(state)) < 0)
 		die("setsockopt SO_REUSEADDR failed\n");
 }
 
+/** 
+* @brief Helper function so skipset can cleanup remaining connections on shutdown.
+* 
+* @param arg A pointer to fd_event_t, stored in poll_mgmt_t store.
+*/
 static void fd_cleanup(void *arg)
 {
 	struct fd_evt_t *data = arg;
@@ -48,6 +64,18 @@ static void fd_cleanup(void *arg)
 
 //////////////////////////////////////////////////////////////////////////////
 
+/** 
+* @brief Generate and store auxiliary connection data associated with a socket.
+* 
+* @param mngr Self pointer.
+* @param fd The file descriptor of the socket
+* @param type The typer of connection: listening or otherwise.
+* @param cbs Callbacks to onopen, onmessage, onclose
+* @param shared A pointer to data shared by all connections.
+* 
+* @return A pointer to the store, free to be associated with the epolling event
+* data structure.
+*/
 static struct fd_evt_t *poll_mgmt_mkstore(poll_mgmt_t *mngr, int fd, int type, struct fd_cbs_t *cbs, void *shared)
 {
 	struct fd_evt_t *data = malloc(sizeof(struct fd_evt_t));
@@ -61,12 +89,24 @@ static struct fd_evt_t *poll_mgmt_mkstore(poll_mgmt_t *mngr, int fd, int type, s
 	return data;
 }
 
+/** 
+* @brief Remove auxiliary connection data associated with a socket.
+* 
+* @param mngr Self pointer.
+* @param fd The file descriptor of the socket
+*/
 static inline void poll_mgmt_removestore(poll_mgmt_t *mngr, int fd)
 {
 	struct fd_evt_t *data = skipset_remove(&mngr->store, fd);
 	free(data);
 }
 
+/** 
+* @brief Helper function to accept an incoming connection and store associated data.
+* 
+* @param mngr Self pointer.
+* @param data Auxiliary connection information.
+*/
 static void poll_mgmt_accept(poll_mgmt_t *mngr, struct fd_evt_t *data)
 {
 	struct epoll_event evt;
@@ -95,6 +135,12 @@ static void poll_mgmt_accept(poll_mgmt_t *mngr, struct fd_evt_t *data)
 		die("epoll_ctr failed to add a connection\n");
 }
 
+/** 
+* @brief Helper function to handle incoming data.
+* 
+* @param mngr Self pointer.
+* @param data Auxiliary connection information.
+*/
 static void poll_mgmt_handle(poll_mgmt_t *mngr, struct fd_evt_t *data)
 {
 	char buf[POLL_MGMT_BUFF_SIZE];
@@ -126,6 +172,14 @@ static void poll_mgmt_handle(poll_mgmt_t *mngr, struct fd_evt_t *data)
 
 //////////////////////////////////////////////////////////////////////////////
 
+/** 
+* @brief Start the polling subsystem.
+* 
+* @param mngr Self pointer.
+* @param size Number of readable concurrent events. This does not set an upper limit
+* to the number of concurrent connections but sets how many events can be read by one
+* call to epoll_wait. See man epoll_create.
+*/
 void poll_mgmt_start(poll_mgmt_t *mngr, int size)
 {
 	mngr->fd = epoll_create(size);
@@ -134,6 +188,11 @@ void poll_mgmt_start(poll_mgmt_t *mngr, int size)
 	skipset_init(&mngr->store, 5);
 }
 
+/** 
+* @brief Stop the polling subsystem. This closes all outstanding open connections.
+* 
+* @param mngr Self pointer.
+*/
 void poll_mgmt_stop(poll_mgmt_t *mngr)
 {
 	skipset_cleanup(&mngr->store, fd_cleanup);
@@ -141,6 +200,16 @@ void poll_mgmt_stop(poll_mgmt_t *mngr)
 	close(mngr->fd);
 }
 
+/** 
+* @brief Start listening on a port and handle incoming connections based on a policy of callbacks.
+* 
+* @param mngr Self pointer.
+* @param port The port to listen on.
+* @param cbs A series of callbacks to use as a policy for handling incoming connections.
+* @param shared Shared data that is assessable to callbacks.
+* 
+* @return The file descriptor of the listening socket.
+*/
 int poll_mgmt_listen(poll_mgmt_t *mngr, int port, struct fd_cbs_t *cbs, void *shared)
 {
 	struct sockaddr_in addr;
@@ -172,6 +241,12 @@ int poll_mgmt_listen(poll_mgmt_t *mngr, int port, struct fd_cbs_t *cbs, void *sh
 	return fd;
 }
 
+/** 
+* @brief Stop listening on a port. Not implemented yet as its not used, yet.
+* 
+* @param mngr Self pointer.
+* @param fd The file descriptor of the listening port. Not final.
+*/
 void poll_mgmt_close(poll_mgmt_t *mngr, int fd)
 {
 	die("poll_mgmt_close has not been implemented");
@@ -181,6 +256,14 @@ void poll_mgmt_close(poll_mgmt_t *mngr, int fd)
 int done = 0;
 static void handler(int sig) { done = 1; }
 
+/** 
+* @brief Poll incoming connections or data and handle them appropriately.
+* 
+* @param mngr Self pointer.
+* @param timeout A timeout to wait for something to happen in.
+* 
+* @return Return code. 0 if OK, > 1 if error.
+*/
 int poll_mgmt_poll(poll_mgmt_t *mngr, int timeout)
 {
 	struct fd_evt_t *data;
