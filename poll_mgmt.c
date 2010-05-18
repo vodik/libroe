@@ -33,12 +33,13 @@ static inline void socket_set_reuseaddr(int fd, int state)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static struct fd_evt_t *poll_mgmt_mkstore(poll_mgmt_t *mngr, int fd, int type, struct fd_cbs_t *cbs)
+static struct fd_evt_t *poll_mgmt_mkstore(poll_mgmt_t *mngr, int fd, int type, struct fd_cbs_t *cbs, void *shared)
 {
 	struct fd_evt_t *data = malloc(sizeof(struct fd_evt_t));
 	data->fd = fd;
 	data->type = type;
 	data->cbs = cbs;
+	data->shared = shared;
 	data->context.data = 0;
 
 	skipset_add(&mngr->store, fd, data);
@@ -65,9 +66,11 @@ static void poll_mgmt_accept(poll_mgmt_t *mngr, struct fd_evt_t *data)
 	socket_set_reuseaddr(fd, 1);
 	socket_set_nonblock(fd);
 
-	struct fd_evt_t *newdata = poll_mgmt_mkstore(mngr, fd, CONN_CONNECTION, data->cbs);
-	if (newdata->cbs && newdata->cbs->onopen)
+	struct fd_evt_t *newdata = poll_mgmt_mkstore(mngr, fd, CONN_CONNECTION, data->cbs, data->shared);
+	if (newdata->cbs && newdata->cbs->onopen) {
+		newdata->context.shared = newdata->shared;
 		newdata->cbs->onopen(&newdata->context);
+	}
 
 	evt.events = EPOLLIN;
 	evt.data.ptr = newdata;
@@ -112,7 +115,7 @@ void poll_mgmt_stop(poll_mgmt_t *mngr)
 	close(mngr->fd);
 }
 
-int poll_mgmt_listen(poll_mgmt_t *mngr, int port, struct fd_cbs_t *cbs)
+int poll_mgmt_listen(poll_mgmt_t *mngr, int port, struct fd_cbs_t *cbs, void *shared)
 {
 	struct sockaddr_in addr;
 	struct epoll_event evt;
@@ -136,7 +139,7 @@ int poll_mgmt_listen(poll_mgmt_t *mngr, int port, struct fd_cbs_t *cbs)
 		die("listen on port %d failed\n", port);
 
 	evt.events = EPOLLIN | EPOLLHUP;
-	evt.data.ptr = poll_mgmt_mkstore(mngr, fd, CONN_LISTENING, cbs);
+	evt.data.ptr = poll_mgmt_mkstore(mngr, fd, CONN_LISTENING, cbs, shared);
 	if (epoll_ctl(mngr->fd, EPOLL_CTL_ADD, fd, &evt) == -1)
 		die("epoll_ctl failed to add listening connection on port %d\n", port);
 	

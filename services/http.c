@@ -56,22 +56,28 @@ void http_on_message(struct fd_context_t *context, const char *msg, size_t nbyte
 	http_parser_read(parser, msg, nbytes);
 	printf("--> reading done\n");
 
-	if (http_parser_done(parser)) {
+	const http_request *request;
+	int result = 0;
+
+	if ((request = http_parser_done(parser))) {
 		printf("got request\n");
-		/*struct http_events_t *events = service->events;
+		struct http_events_t *events = context->shared;
 		if (events) {
 			switch (request->method) {
 				case HTTP_GET:
 					if (events->GET)
 						result = events->GET(request, response);
+					break;
 				case HTTP_POST:
 					if (events->POST)
 						result = events->POST(request, response);
+					break;
 				case HTTP_PUT:
 					if (events->PUT)
 						result = events->PUT(request, response);
+					break;
 			}
-		}*/
+		}
 		//return result;
 	}
 	//return 0;
@@ -100,7 +106,7 @@ static struct fd_cbs_t http_callbacks = {
 void http_start(struct service_t *http, poll_mgmt_t *mgmt, int port, struct http_events_t *events)
 {
 	http->type = SERVICE_HTTP;
-	http->fd = poll_mgmt_listen(mgmt, port, &http_callbacks);//, &http_callbacks, http);
+	http->fd = poll_mgmt_listen(mgmt, port, &http_callbacks, events);//, &http_callbacks, http);
 	http->mgmt = mgmt;
 	http->events = events;
 }
