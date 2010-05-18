@@ -27,18 +27,18 @@ void ws_on_disconnection(void *context, void *arg)
 {
 }
 
-static struct fdcbs_t ws_callbacks = {
+/*static struct fdcbs_t ws_callbacks = {
 	.onconn		= ws_on_connection,
 	.onrecv		= ws_on_recv,
 	.ondisconn	= ws_on_disconnection,
-};
+};*/
 
-struct service_t *websocks_start(poll_mgmt_t *epoll, int port, struct ws_events_t *events)
+struct service_t *websocks_start(poll_mgmt_t *mgmt, int port, struct ws_events_t *events)
 {
 	struct service_t *ws = malloc(sizeof(struct service_t));
 	ws->type = SERVICE_WEBSOCKS;
-	ws->fd = epoll_listen(epoll, port, &ws_callbacks, ws);
-	ws->epoll = epoll;
+	//ws->fd = epoll_listen(epoll, port, &ws_callbacks, ws);
+	ws->mgmt = mgmt;
 	ws->events = events;
 	return ws;
 }

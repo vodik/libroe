@@ -6,12 +6,6 @@
 /** 
 * @brief 
 */
-struct keypair {
-	char *key;
-	void *data;
-	struct keypair *next;
-};
-
 /** 
 * @brief 
 * 
@@ -32,115 +26,117 @@ static unsigned int sdbmhasher(const char *key)
 * 
 * @param size
 * @param hasher
-* @param tbl
+* @param table
 */
-void hashtable_init(unsigned int size, hashfunc hasher, hashtable *tbl)
+void hashtable_init(hashtable_t *table, unsigned int size, hashfunc hasher)
 {
-	tbl->nodes = calloc(size, sizeof(struct keypair *));
-	memset(tbl->nodes, 0, sizeof(struct keypair *) * size);
-	tbl->size = size;
-	tbl->hasher = hasher ? hasher : sdbmhasher;
+	table->nodes = calloc(size, sizeof(struct hashnode_t *));
+	memset(table->nodes, 0, sizeof(struct hashnode_t *) * size);
+	table->size = size;
+	table->hasher = hasher ? hasher : sdbmhasher;
 }
 
 /** 
 * @brief 
 * 
-* @param tbl
+* @param table
 */
-void hashtable_free(hashtable *tbl, int freedata)
+void hashtable_cleanup(hashtable_t *table, cleanup_func clean)
 {
 	int i;
-	struct keypair *node, *prev;
+	struct hashnode_t *node, *prev;
 
-	for (i = 0; i < tbl->size; ++i) {
-		node = tbl->nodes[i];
+	for (i = 0; i < table->size; ++i) {
+		node = table->nodes[i];
 		while (node) {
-			free(node->key);
-			if (freedata)
-				free(node->data);
 			prev = node;
 			node = node->next;
+			if (clean)
+				clean(prev->val);
+			free(prev->key);
 			free(prev);
 		}
 	}
-	free(tbl->nodes);
+	free(table->nodes);
 }
 
 /** 
 * @brief 
 * 
-* @param tbl
+* @param table
 * @param key
 * @param data
 */
-void hashtable_insert(hashtable *tbl, const char *key, void *data)
+void hashtable_add(hashtable_t *table, const char *key, void *data)
 {
-	struct keypair *node;
-	unsigned int hash = tbl->hasher(key) % tbl->size;
+	struct hashnode_t *node;
+	unsigned int hash = table->hasher(key) % table->size;
 
-	node = tbl->nodes[hash];
+	node = table->nodes[hash];
 	while (node) {
 		if (strcmp(node->key, key) == 0) {
-			node->data = data;
+			node->val = data;
 			return;
 		}
 		node = node->next;
 	}
-	node = malloc(sizeof(struct keypair));
+	node = malloc(sizeof(struct hashnode_t));
 	node->key = strdup(key);
-	node->data = data;
-	node->next = tbl->nodes[hash];
-	tbl->nodes[hash] = node;
+	node->val = data;
+	node->next = table->nodes[hash];
+	table->nodes[hash] = node;
 }
 
 /** 
 * @brief Remove an entry from a hashtable.
 * 
-* @param tbl the hashtable.
+* @param table the hashtable.
 * @param key the key to remove.
 * 
 * @return 0 on success, 1 on failure.
 */
-int hashtable_remove(hashtable *tbl, const char *key)
+void *hashtable_remove(hashtable_t *table, const char *key)
 {
-	struct keypair *node, *prev = NULL;
-	unsigned int hash = tbl->hasher(key) % tbl->size;
+	struct hashnode_t *node, *prev = NULL;
+	unsigned int hash = table->hasher(key) % table->size;
+	void *ret = NULL;
 
-	node = tbl->nodes[hash];
+	node = table->nodes[hash];
 	while (node) {
 		if (strcmp(node->key, key) == 0) {
 			if (prev)
 				prev->next = node->next;
 			else
-				tbl->nodes[hash] = node->next;
+				table->nodes[hash] = node->next;
 
+			ret = node->val;
 			free(node->key);
 			free(node);
-			return 0;
+			return ret;
 		}
 		prev = node;
 		node = node->next;
 	}
-	return 1;
+	return ret;
 }
 
 /** 
 * @brief Retrieve a value from a hashtable.
 * 
-* @param tbl the hashtable.
+* @param table the hashtable.
 * @param key the key to retrieve.
 * 
 * @return if present, the stored data. Otherwise NULL.
 */
-void *hashtable_get(const hashtable *tbl, const char *key)
+void *hashtable_get(const hashtable_t *table, const char *key)
 {
-	struct keypair *node;
-	unsigned int hash = tbl->hasher(key) % tbl->size;
+	struct hashnode_t *node;
+	unsigned int hash = table->hasher(key) % table->size;
 
-	node = tbl->nodes[hash];
+	node = table->nodes[hash];
 	while (node) {
 		if (strcmp(node->key, key) == 0)
-			return node->data;
+			return node->val;
 		node = node->next;
 	}
 	return NULL;
@@ -149,27 +145,27 @@ void *hashtable_get(const hashtable *tbl, const char *key)
 /** 
 * @brief 
 * 
-* @param tbl
+* @param table
 * @param size
 */
-void hashtable_resize(hashtable *tbl, unsigned int size)
+/*void hashtable_resize(hashtable *table, unsigned int size)
 {
-	hashtable newtbl;
-	struct keypair* node;
+	hashtable newtable;
+	struct hashnode_t* node;
 	int i;
 
-	newtbl.size = size;
-	newtbl.hasher = tbl->hasher;
-	newtbl.nodes = calloc(size, sizeof(struct keypair *));
+	newtable.size = size;
+	newtable.hasher = table->hasher;
+	newtable.nodes = calloc(size, sizeof(struct hashnode_t *));
 
-	for(i = 0; i < tbl->size; ++i) {
-		for(node = tbl->nodes[i]; node; node = node->next) {
-			hashtable_insert(&newtbl, node->key, node->data);
-			hashtable_remove(tbl, node->key);
+	for(i = 0; i < table->size; ++i) {
+		for(node = table->nodes[i]; node; node = node->next) {
+			hashtable_insert(&newtable, node->key, node->data);
+			hashtable_remove(table, node->key);
 		}
 	}
 
-	free(tbl->nodes);
-	tbl->size = newtbl.size;
-	tbl->nodes = newtbl.nodes;
-}
+	free(table->nodes);
+	table->size = newtable.size;
+	table->nodes = newtable.nodes;
+}*/

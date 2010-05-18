@@ -74,11 +74,11 @@ void http_on_disconnection(void *context, void *arg)
 	free(ctext);
 }
 
-static struct fdcbs_t http_callbacks = {
+/*static struct fdcbs_t http_callbacks = {
 	.onconn		= http_on_connection,
 	.onrecv		= http_on_recv,
 	.ondisconn	= http_on_disconnection,
-};
+};*/
 
 struct service_t *http_start(poll_mgmt_t *mgmt, int port, struct http_events_t *events)
 {

@@ -19,7 +19,7 @@
 #include <services/websocks.h>
 
 /* FIXME: this is a quick and dirty hackish implementation */
-void parse_args(hashtable *table, const char *args)
+void parse_args(hashtable_t *table, const char *args)
 {
 	char arg[1024];
 	char val[1024];
@@ -125,6 +125,6 @@ int main(int argc, char *argv[])
 	}
 	
 	printf("==> ending - %d, %s\n", running, strerror(running));
-	service_end(&mgmt, services[0]);
+	//service_end(&mgmt, services[0]);
 	poll_mgmt_stop(&mgmt);
 }

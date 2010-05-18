@@ -10,7 +10,7 @@ typedef struct {
 	char *args;
 	int version_major, version_minor;
 
-	hashtable headers;
+	hashtable_t headers;
 } http_request;
 
 void http_request_init(http_request *, int fd);
