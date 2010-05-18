@@ -35,7 +35,7 @@ struct service_t *websocks_start(poll_mgmt_t *mgmt, int port, struct ws_events_t
 {
 	struct service_t *ws = malloc(sizeof(struct service_t));
 	ws->type = SERVICE_WEBSOCKS;
-	ws->fd = poll_mgmt_listen(mgmt, port, &ws_callbacks);//, &ws_callbacks, ws);
+	ws->fd = poll_mgmt_listen(mgmt, port, &ws_callbacks, events);//, &ws_callbacks, ws);
 	ws->mgmt = mgmt;
 	ws->events = events;
 	return ws;

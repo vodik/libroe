@@ -5,6 +5,8 @@
 
 void http_request_init(http_request *request)
 {
+	request->path = NULL;
+	request->args = NULL;
 	hashtable_init(&request->headers, 16, NULL);
 }
 

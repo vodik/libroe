@@ -31,6 +31,21 @@ static inline void socket_set_reuseaddr(int fd, int state)
 		die("setsockopt SO_REUSEADDR failed\n");
 }
 
+static void fd_cleanup(void *arg)
+{
+	struct fd_evt_t *data = arg;
+
+	if (data->type != CONN_LISTENING) {
+		if (data->cbs && data->cbs->onclose)
+			data->cbs->onclose(&data->context);
+		if (data->context.context_free)
+			data->context.context_free(data->context.data);
+	}
+
+	close(data->fd);
+	free(arg);
+}
+
 //////////////////////////////////////////////////////////////////////////////
 
 static struct fd_evt_t *poll_mgmt_mkstore(poll_mgmt_t *mngr, int fd, int type, struct fd_cbs_t *cbs, void *shared)
@@ -91,9 +106,16 @@ static void poll_mgmt_handle(poll_mgmt_t *mngr, struct fd_evt_t *data)
 		data->cbs->onmessage(&data->context, buf, r);
 	}
 
+	if (data->cbs && data->cbs->onclose)
+		data->cbs->onclose(&data->context);
+
 	printf("killing!\n");
 	if (epoll_ctl(mngr->fd, EPOLL_CTL_DEL, data->fd, NULL) == -1)
 		die("%d: epoll_ctl failed to remove connection\n", __LINE__);
+
+	if (data->context.context_free)
+		data->context.context_free(data->context.data);
+
 	close(data->fd);
 	poll_mgmt_removestore(mngr, data->fd);
 }
@@ -110,7 +132,7 @@ void poll_mgmt_start(poll_mgmt_t *mngr, int size)
 
 void poll_mgmt_stop(poll_mgmt_t *mngr)
 {
-	skipset_cleanup(&mngr->store, free);
+	skipset_cleanup(&mngr->store, fd_cleanup);
 	free(mngr->events);
 	close(mngr->fd);
 }

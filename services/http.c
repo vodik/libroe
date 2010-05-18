@@ -85,17 +85,7 @@ void http_on_message(struct fd_context_t *context, const char *msg, size_t nbyte
 
 void http_on_close(struct fd_context_t *context)
 {
-	/*struct http_context_t *ctext = context;
-	http_parser_free(&ctext->parser);
-	http_response_end(&ctext->response);
-	free(ctext);*/
 }
-
-/*static struct fdcbs_t http_callbacks = {
-	.onconn		= http_on_connection,
-	.onrecv		= http_on_recv,
-	.ondisconn	= http_on_disconnection,
-};*/
 
 static struct fd_cbs_t http_callbacks = {
 	.onopen		= http_on_open,

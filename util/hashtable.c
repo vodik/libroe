@@ -30,8 +30,10 @@ static unsigned int sdbmhasher(const char *key)
 */
 void hashtable_init(hashtable_t *table, unsigned int size, hashfunc hasher)
 {
-	table->nodes = calloc(size, sizeof(struct hashnode_t *));
-	memset(table->nodes, 0, sizeof(struct hashnode_t *) * size);
+	int memsize = sizeof(struct hashnode_t *) * size;
+
+	table->nodes = malloc(memsize);
+	memset(table->nodes, 0, memsize);
 	table->size = size;
 	table->hasher = hasher ? hasher : sdbmhasher;
 }
