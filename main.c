@@ -34,7 +34,7 @@ void parse_args(hashtable_t *table, const char *args)
 		} else if (*args == '&') {
 			*mode = '\0';
 			len = url_decode(dec, val);
-			//hashtable_insert(table, arg, strndup(dec, len));
+			hashtable_add(table, arg, strndup(dec, len));
 			mode = arg;
 			len = 0;
 		} else {
@@ -45,7 +45,7 @@ void parse_args(hashtable_t *table, const char *args)
 	}
 	*mode = '\0';
 	len = url_decode(dec, val);
-	//hashtable_insert(table, arg, strndup(dec, len));
+	hashtable_add(table, arg, strndup(dec, len));
 }
 
 /* TODO: security. This can escape root with a malformed request (browsers filter /../ though) */
@@ -85,12 +85,13 @@ int http_get(const http_request const *request, http_response *response)
 	printf("\n");
 
 	if (request->args) {
-		/*hashtable table;
-		hashtable_init(16, NULL, &table);
+		hashtable_t table;
+		hashtable_init(&table, 16, NULL);
 		parse_args(&table, request->args);
 
 		printf("==> Message 1: \"%s\"\n",   (char *)hashtable_get(&table, "msg1"));
-		printf("==> Message 2: \"%s\"\n\n", (char *)hashtable_get(&table, "msg2"));*/
+		printf("==> Message 2: \"%s\"\n\n", (char *)hashtable_get(&table, "msg2"));
+		hashtable_cleanup(&table, free);
 	}
 
 	if (strcmp(request->path, "/favicon.ico") == 0)

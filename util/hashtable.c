@@ -32,7 +32,7 @@ void hashtable_init(hashtable_t *table, unsigned int size, hashfunc hasher)
 {
 	int memsize = sizeof(struct hashnode_t *) * size;
 
-	table->nodes = malloc(memsize);
+	table->nodes = calloc(memsize);
 	memset(table->nodes, 0, memsize);
 	table->size = size;
 	table->hasher = hasher ? hasher : sdbmhasher;
@@ -76,7 +76,7 @@ void hashtable_add(hashtable_t *table, const char *key, void *data)
 
 	node = table->nodes[hash];
 	while (node) {
-		if (strcmp(node->key, key) == 0) {
+		if (node->key && strcmp(node->key, key) == 0) {
 			node->val = data;
 			return;
 		}
@@ -105,7 +105,7 @@ void *hashtable_remove(hashtable_t *table, const char *key)
 
 	node = table->nodes[hash];
 	while (node) {
-		if (strcmp(node->key, key) == 0) {
+		if (node->key && strcmp(node->key, key) == 0) {
 			if (prev)
 				prev->next = node->next;
 			else
@@ -137,37 +137,9 @@ void *hashtable_get(const hashtable_t *table, const char *key)
 
 	node = table->nodes[hash];
 	while (node) {
-		if (strcmp(node->key, key) == 0)
+		if (node->key && strcmp(node->key, key) == 0)
 			return node->val;
 		node = node->next;
 	}
 	return NULL;
 }
-
-/** 
-* @brief 
-* 
-* @param table
-* @param size
-*/
-/*void hashtable_resize(hashtable *table, unsigned int size)
-{
-	hashtable newtable;
-	struct hashnode_t* node;
-	int i;
-
-	newtable.size = size;
-	newtable.hasher = table->hasher;
-	newtable.nodes = calloc(size, sizeof(struct hashnode_t *));
-
-	for(i = 0; i < table->size; ++i) {
-		for(node = table->nodes[i]; node; node = node->next) {
-			hashtable_insert(&newtable, node->key, node->data);
-			hashtable_remove(table, node->key);
-		}
-	}
-
-	free(table->nodes);
-	table->size = newtable.size;
-	table->nodes = newtable.nodes;
-}*/
