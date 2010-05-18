@@ -80,12 +80,12 @@ static struct fdcbs_t http_callbacks = {
 	.ondisconn	= http_on_disconnection,
 };
 
-struct service_t *http_start(struct epoll_t *epoll, int port, struct http_events_t *events)
+struct service_t *http_start(poll_mgmt_t *mgmt, int port, struct http_events_t *events)
 {
 	struct service_t *http = malloc(sizeof(struct service_t));
 	http->type = SERVICE_HTTP;
-	http->fd = epoll_listen(epoll, port, &http_callbacks, http);
-	http->epoll = epoll;
+	http->fd = poll_mgmt_listen(mgmt, port);//, &http_callbacks, http);
+	http->mgmt = mgmt;
 	http->events = events;
 	return http;
 }

@@ -1,7 +1,7 @@
 #ifndef SMALLHTTP_SERVICES
 #define SMALLHTTP_SERVICES
 
-#include "socks.h"
+#include "poll_mgmt.h"
 
 enum {
 	SERVICE_HTTP,
@@ -11,10 +11,10 @@ enum {
 struct service_t {
 	int type;
 	int fd;
-	struct epoll_t *epoll;
+	poll_mgmt_t *mgmt;
 	void *events;
 };
 
-void service_end(struct epoll_t *epoll, struct service_t *service);
+void service_end(poll_mgmt_t *mgmt, struct service_t *service);
 
 #endif

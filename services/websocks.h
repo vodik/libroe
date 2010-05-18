@@ -7,6 +7,6 @@ struct ws_events_t {
 	int temp;
 };
 
-struct service_t *websocks_start(struct epoll_t *epoll, int port, struct ws_events_t *events);
+struct service_t *websocks_start(poll_mgmt_t *mgmt, int port, struct ws_events_t *events);
 
 #endif

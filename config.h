@@ -1,0 +1,6 @@
+#ifndef SMALLHTTP_CONFIG
+#define SMALLHTTP_CONFIG
+
+#define ACCEPT_BACKLOG 10
+
+#endif

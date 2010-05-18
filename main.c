@@ -14,7 +14,7 @@
 
 #include <util.h>
 #include <util/urlencode.h>
-#include <socks.h>
+#include <poll_mgmt.h>
 #include <services/http.h>
 #include <services/websocks.h>
 
@@ -104,36 +104,27 @@ static struct http_events_t http_handler = {
 	.PUT  = NULL,
 };
 
-int running = 0;
-struct epoll_t epoll;
-struct service_t *services[2];
-
-static void sigterm()
-{
-	fprintf(stderr, "HANDLED term!\n");
-	running = 1;
-}
-
 int main(int argc, char *argv[])
 {
-	signal(SIGINT, sigterm);
-	signal(SIGTERM, sigterm);
+	poll_mgmt_t mgmt;
+	struct service_t *services[2];
 
-	epoll_init(&epoll, 10);
+	poll_mgmt_start(&mgmt, 10);
 
-	services[0] = http_start(&epoll, PORT1, &http_handler);
-	//services[1] = websocks_start(&epoll, PORT2, NULL);
+	services[0] = http_start(&mgmt, PORT1, &http_handler);
+	//services[1] = websocks_start(&mgmt, PORT2, NULL);
 
 	printf("http://localhost:%d/index.html\n", PORT1);
 
+	int running = 0;
 	while(running == 0) {
 		printf("--> wait\n");
-		running = epoll_poll(&epoll, -1);
+		running = poll_mgmt_poll(&mgmt, -1);
 		if (running == 0)
 			printf("--> step - %d, %s\n", running, strerror(running));
 	}
 	
 	printf("==> ending - %d, %s\n", running, strerror(running));
-	service_end(&epoll, services[0]);
-	epoll_stop(&epoll);
+	service_end(&mgmt, services[0]);
+	poll_mgmt_stop(&mgmt);
 }
