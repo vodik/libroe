@@ -25,6 +25,7 @@ struct http_context_t *http_context_new()
 	struct http_context_t *context = malloc(sizeof(struct http_context_t));
 	http_parser_init(&context->parser);
 	http_response_init(&context->response, context->fd);
+	context->fd = 99;
 	return context;
 }
 
@@ -40,6 +41,7 @@ void http_context_free(void *data)
 
 void http_on_open(struct fd_context_t *context)
 {
+	printf("--> opening\n");
 	context->data = http_context_new();
 	context->context_free = http_context_free;
 }

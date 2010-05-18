@@ -10,6 +10,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <signal.h>
+#include <assert.h>
 
 #include "util.h"
 #include "config.h"
@@ -32,12 +33,13 @@ static inline void socket_set_reuseaddr(int fd, int state)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void *poll_mgmt_mkstore(poll_mgmt_t *mngr, int fd, int type, struct fd_cbs_t *cbs)
+static struct fd_evt_t *poll_mgmt_mkstore(poll_mgmt_t *mngr, int fd, int type, struct fd_cbs_t *cbs)
 {
 	struct fd_evt_t *data = malloc(sizeof(struct fd_evt_t));
 	data->fd = fd;
 	data->type = type;
 	data->cbs = cbs;
+	data->context.data = 0;
 
 	skipset_add(&mngr->store, fd, data);
 	return data;
@@ -63,12 +65,13 @@ static void poll_mgmt_accept(poll_mgmt_t *mngr, struct fd_evt_t *data)
 	socket_set_reuseaddr(fd, 1);
 	socket_set_nonblock(fd);
 
-	/* FIXME: raise event here */
-	if (data->cbs && data->cbs->onopen)
-		data->cbs->onopen(&data->context);
+	struct fd_evt_t *newdata = poll_mgmt_mkstore(mngr, fd, CONN_CONNECTION, data->cbs);
+	if (newdata->cbs && newdata->cbs->onopen)
+		newdata->cbs->onopen(&newdata->context);
 
 	evt.events = EPOLLIN;
-	evt.data.ptr = poll_mgmt_mkstore(mngr, fd, CONN_CONNECTION, data->cbs);
+	evt.data.ptr = newdata;
+
 	if (epoll_ctl(mngr->fd, EPOLL_CTL_ADD, fd, &evt) == -1)
 		die("epoll_ctr failed to add a connection\n");
 }
@@ -81,6 +84,7 @@ static void poll_mgmt_handle(poll_mgmt_t *mngr, struct fd_evt_t *data)
 	if (r != 0 && data->cbs && data->cbs->onopen) {
 		printf("%d: oh my god!\n", data->fd);
 		buf[r] = '\0';
+		assert(data->context.data != 0);
 		data->cbs->onmessage(&data->context, buf, r);
 	}
 
