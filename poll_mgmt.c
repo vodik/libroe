@@ -126,9 +126,8 @@ static void poll_mgmt_accept(poll_mgmt_t *mngr, struct fd_evt_t *data)
 	struct fd_evt_t *newdata = poll_mgmt_mkstore(mngr, fd, CONN_CONNECTION, data->cbs, data->shared);
 	newdata->context.fd = fd;
 	newdata->context.shared = newdata->shared;
-	if (newdata->cbs && newdata->cbs->onopen) {
+	if (newdata->cbs && newdata->cbs->onopen)
 		newdata->cbs->onopen(&newdata->context);
-	}
 
 	evt.events = EPOLLIN;
 	evt.data.ptr = newdata;
