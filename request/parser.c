@@ -157,8 +157,9 @@ static int read_request1(struct state *state, const char **http, int *len)
 	char *b = state->buf + state->len;
 	int result;
 
-	while ((*len)-- > 0 && (*b++ = *(*http)++) != ' ' && state->len++ < BUFFER_LENGTH);
-	*--b = '\0';
+	while ((*len)-- > 0 && (*b = *(*http)++) != ' ' && state->len++ < BUFFER_LENGTH)
+		++b;
+	*b = '\0';
 
 	if (*len == 0)
 		return 0;
@@ -184,8 +185,9 @@ static int read_request2(struct state *state, const char **http, int *len)
 	char *b = state->buf + state->len;
 	int result;
 
-	while ((*len)-- > 0 && (*b++ = *(*http)++) != '\r' && state->len++ < BUFFER_LENGTH);
-	*--b = '\0';
+	while ((*len)-- > 0 && (*b = *(*http)++) != '\r' && state->len++ < BUFFER_LENGTH);
+		++b;
+	*b = '\0';
 
 	if (*len == 0)
 		return 0;
@@ -222,8 +224,10 @@ static int read_header(struct state *state, const char **http, int *len)
 		}
 	}
 
-	while ((*len)-- > 0 && (*b++ = *(*http)++) != ':' && state->len++ < BUFFER_LENGTH);
-	*--b = '\0';
+	while ((*len)-- > 0 && (*b = *(*http)++) != ':' && state->len++ < BUFFER_LENGTH);
+		++b;
+	*b = '\0';
+
 
 	if (*len == 0)
 		return 0;
@@ -250,8 +254,9 @@ static int read_value(struct state *state, const char **http, int *len)
 	char *b = state->buf + state->len;
 	int result;
 
-	while ((*len)-- > 0 && (*b++ = *(*http)++) != '\r' && state->len++ < BUFFER_LENGTH);
-	*--b = '\0';
+	while ((*len)-- > 0 && (*b = *(*http)++) != '\r' && state->len++ < BUFFER_LENGTH);
+		++b;
+	*b = '\0';
 
 	if (*len == 0)
 		return 0;
