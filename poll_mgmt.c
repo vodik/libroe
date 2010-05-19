@@ -83,7 +83,9 @@ static struct fd_evt_t *poll_mgmt_mkstore(poll_mgmt_t *mngr, int fd, int type, s
 	data->type = type;
 	data->cbs = cbs;
 	data->shared = shared;
-	data->context.data = 0;
+
+	data->context.data = NULL;
+	data->context.context_free = NULL;
 
 	skipset_add(&mngr->store, fd, data);
 	return data;
@@ -150,7 +152,6 @@ static void poll_mgmt_handle(poll_mgmt_t *mngr, struct fd_evt_t *data)
 	if (r != 0 && data->cbs && data->cbs->onopen) {
 		printf("%d: oh my god!\n", data->fd);
 		buf[r] = '\0';
-		assert(data->context.data != 0);
 		keepalive = data->cbs->onmessage(&data->context, buf, r);
 	}
 

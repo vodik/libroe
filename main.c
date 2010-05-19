@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
 	poll_mgmt_start(&mgmt, 10);
 
 	http_start(&services[0], &mgmt, PORT1, &http_handler);
-	//websocks_start(&services[1], &mgmt, PORT2, NULL);
+	websocks_start(&services[1], &mgmt, PORT2, NULL);
 
 	printf("http://localhost:%d/index.html\n", PORT1);
 

@@ -5,13 +5,13 @@
   <script>
     $(document).ready(function() {
       function debug(str) {
-        $("#debug").append("<p>"+str+"</p>");
+        $("#debug").append("<p>" + str + "</p>");
       };
 
-      ws = new WebSocket("ws://localhost:8080");
+      ws = new WebSocket("ws://localhost:33456");
 
       ws.onmessage = function(evt) {
-        $("#msg").append("<p>"+evt.data+"</p>");
+        $("#msg").append("<p>" + evt.data + "</p>");
       };
       ws.onclose = function() {
         debug("socket closed");
@@ -34,6 +34,7 @@
 
     #title {
       font-weight: bold;
+      text-decoration: underline;
     }
 
     #debug {
@@ -53,9 +54,10 @@
   </style>
 </head>
 <body>
+  <h1>Hello Websockets</h1>
   <div id="debug"></div>
   <div id="msg">
-    <p id="title">Recieved messages:</p>
+    <p id="title">Recieved Messages</p>
   </div>
 </body>
 </html>

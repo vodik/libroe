@@ -19,6 +19,7 @@ void ws_on_open(struct fd_context_t *context)
 
 int ws_on_message(struct fd_context_t *context, const char *msg, size_t nbytes)
 {
+	printf(">>> got ws message!\n%s---\n", msg);
 	return 0;
 }
 
@@ -32,12 +33,10 @@ static struct fd_cbs_t ws_callbacks = {
 	.onclose	= ws_on_close,
 };
 
-struct service_t *websocks_start(poll_mgmt_t *mgmt, int port, struct ws_events_t *events)
+void websocks_start(struct service_t *ws, poll_mgmt_t *mgmt, int port, struct ws_events_t *events)
 {
-	struct service_t *ws = malloc(sizeof(struct service_t));
 	ws->type = SERVICE_WEBSOCKS;
 	ws->fd = poll_mgmt_listen(mgmt, port, &ws_callbacks, events);//, &ws_callbacks, ws);
 	ws->mgmt = mgmt;
 	ws->events = events;
-	return ws;
 }
