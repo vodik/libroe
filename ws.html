@@ -16,9 +16,11 @@
       ws.onclose = function() {
         debug("--- socket closed ---");
       };
+      ws.onerror = function(evt) {
+        $("#debug").append("<p> --- " + evt.data + " --- </p>");
+      };
       ws.onopen = function() {
         debug("--- connected ---");
-        ws.send("hello server");
       };
     });
   </script>
@@ -44,20 +46,27 @@
       margin-right: 5em;
     }
 
-    #msg {
+    #msgbox {
       background: #646464;
       border: solid 1px #313131;
       margin-top: 20px;
       margin-left: 5em;
       margin-right: 5em;
+      padding-bottom: 0px;
     }
   </style>
 </head>
 <body>
   <h1>Hello Websockets</h1>
   <div id="debug"></div>
-  <div id="msg">
+  <div id="msgbox">
     <p id="title">Recieved Messages</p>
+    <div id="msg">
+    </div>
+
+    <label for="command">Send a command:</label>
+    <input id="command" name="command" type="text">
+    <input type="button" value="Send" onclick="ws.send($('#command').val())"/>
   </div>
 </body>
 </html>

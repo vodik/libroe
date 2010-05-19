@@ -23,24 +23,40 @@ const char message[] =
 
 void ws_on_open(struct fd_context_t *context)
 {
+	printf(">>> on connect!\n");
 }
 
 int ws_on_message(struct fd_context_t *context, const char *msg, size_t nbytes)
 {
-	printf(">>> got ws message!\n%s---\n", msg);
-	write(context->fd, message, strlen(message));
-	printf(">>> writting:\n%s---\n", message);
+	static int handshake = 1;
+	static unsigned char buf[512];
 
-	char buf[14];
-	buf[0] = 0x00;
-	strcpy(buf + 1, "hello world");
-	buf[11] = (char)0xff;
-	write(context->fd, buf, 11);
+	if (handshake) {
+		printf(">>> got ws message!\n%s---\n", msg);
+		write(context->fd, message, strlen(message));
+		printf(">>> writting:\n%s---\n", message);
+		handshake = 0;
+	} else {
+		char *m = (char *)msg + 1;
+		m[nbytes - 2] = '\0';
+		printf(">>> got ws message: \"%s\"\n", m);
+
+		unsigned char *b = buf;
+		*b++ = 0x00;
+		int i = 0;
+		for (i = 0; i < strlen(m); ++i)
+			*b++ = m[i];
+		*b = 0xff;
+		i += 2;
+
+		printf("<<< ws sent %d\n", write(context->fd, buf, i));
+	}
 	return 1;
 }
 
 void ws_on_close(struct fd_context_t *context)
 {
+	printf(">>> on close!\n");
 }
 
 static struct fd_cbs_t ws_callbacks = {
