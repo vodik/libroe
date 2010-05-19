@@ -17,6 +17,7 @@
 #include <poll_mgmt.h>
 #include <services/http.h>
 #include <services/websocks.h>
+#include "config.h"
 
 /* FIXME: this is a quick and dirty hackish implementation */
 void parse_args(hashtable_t *table, const char *args)
@@ -120,7 +121,7 @@ int main(int argc, char *argv[])
 	poll_mgmt_t mgmt;
 	struct service_t services[2];
 
-	poll_mgmt_start(&mgmt, 10);
+	poll_mgmt_start(&mgmt, POLL_EVENTS);
 
 	http_start(&services[0], &mgmt, PORT1, &http_handler);
 	//websocks_start(&services[1], &mgmt, PORT2, NULL);
