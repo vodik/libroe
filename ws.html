@@ -8,16 +8,16 @@
         $("#debug").append("<p>" + str + "</p>");
       };
 
-      ws = new WebSocket("ws://localhost:33456");
+      ws = new WebSocket("ws://localhost:33456/service");
 
       ws.onmessage = function(evt) {
         $("#msg").append("<p>" + evt.data + "</p>");
       };
       ws.onclose = function() {
-        debug("socket closed");
+        debug("--- socket closed ---");
       };
       ws.onopen = function() {
-        debug("connected...");
+        debug("--- connected ---");
         ws.send("hello server");
       };
     });

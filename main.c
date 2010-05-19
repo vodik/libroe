@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
 	http_start(&services[0], &mgmt, PORT1, &http_handler);
 	websocks_start(&services[1], &mgmt, PORT2, NULL);
 
-	printf("http://localhost:%d/index.html\n", PORT1);
+	printf("http://localhost:%d/ws.html\n", PORT1);
 
 	int running = 0;
 	while(running == 0) {

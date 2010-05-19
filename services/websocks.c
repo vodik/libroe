@@ -13,6 +13,14 @@
 
 #include "util.h"
 
+const char message[] =
+	"HTTP/1.1 101 Web Socket Protocol Handshake\r\n"
+	"Upgrade: WebSocket\r\n"
+	"Connection: Upgrade\r\n"
+	"WebSocket-Origin: http://localhost:44567\r\n"
+	"WebSocket-Location: ws://localhost:33456/service\r\n"
+	"\r\n";
+
 void ws_on_open(struct fd_context_t *context)
 {
 }
@@ -20,7 +28,15 @@ void ws_on_open(struct fd_context_t *context)
 int ws_on_message(struct fd_context_t *context, const char *msg, size_t nbytes)
 {
 	printf(">>> got ws message!\n%s---\n", msg);
-	return 0;
+	write(context->fd, message, strlen(message));
+	printf(">>> writting:\n%s---\n", message);
+
+	char buf[14];
+	buf[0] = 0x00;
+	strcpy(buf + 1, "hello world");
+	buf[11] = (char)0xff;
+	write(context->fd, buf, 11);
+	return 1;
 }
 
 void ws_on_close(struct fd_context_t *context)
