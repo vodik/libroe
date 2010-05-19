@@ -13,6 +13,10 @@
 
 #include "util.h"
 
+struct ws_context_t {
+	int authenticated;
+};
+
 const char message[] =
 	"HTTP/1.1 101 Web Socket Protocol Handshake\r\n"
 	"Upgrade: WebSocket\r\n"
@@ -23,19 +27,22 @@ const char message[] =
 
 void ws_on_open(struct fd_context_t *context)
 {
-	printf(">>> on connect!\n");
+	struct ws_context_t *ws_context = malloc(sizeof(struct ws_context_t));
+	ws_context->authenticated = 0;
+	context->data = ws_context;
+	context->context_free = free;
 }
 
 int ws_on_message(struct fd_context_t *context, const char *msg, size_t nbytes)
 {
-	static int handshake = 1;
+	struct ws_context_t *ws_context = context->data;
 	static unsigned char buf[512];
 
-	if (handshake) {
+	if (!ws_context->authenticated) {
 		printf(">>> got ws message!\n%s---\n", msg);
 		write(context->fd, message, strlen(message));
 		printf(">>> writting:\n%s---\n", message);
-		handshake = 0;
+		ws_context->authenticated = 1;
 	} else {
 		char *m = (char *)msg + 1;
 		m[nbytes - 2] = '\0';
