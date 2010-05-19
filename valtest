@@ -1,3 +1,16 @@
 #!/bin/bash
 
-valgrind --tool=memcheck --leak-check=full --show-reachable=yes --track-fds=yes ./test
+if [[ $1 == "massif" ]]
+then
+	valgrind --tool=massif                 \
+			 --time-unit=B                 \
+			 --massif-out-file=massif.out  \
+			 ./test
+	ms_print massif.out | less
+else
+	valgrind --tool=memcheck               \
+			 --leak-check=full             \
+			 --show-reachable=yes          \
+			 --track-fds=yes               \
+			 ./test
+fi
