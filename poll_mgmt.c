@@ -83,7 +83,9 @@ static struct fd_evt_t *poll_mgmt_mkstore(poll_mgmt_t *mngr, int fd, int type, s
 	data->type = type;
 	data->cbs = cbs;
 	data->shared = shared;
-	data->context.data = 0;
+
+	data->context.data = NULL;
+	data->context.context_free = NULL;
 
 	skipset_add(&mngr->store, fd, data);
 	return data;
@@ -118,15 +120,14 @@ static void poll_mgmt_accept(poll_mgmt_t *mngr, struct fd_evt_t *data)
 
 	printf("oh, its accepted\n");
 	
-	socket_set_reuseaddr(fd, 1);
+	//socket_set_reuseaddr(fd, 1);
 	socket_set_nonblock(fd);
 
 	struct fd_evt_t *newdata = poll_mgmt_mkstore(mngr, fd, CONN_CONNECTION, data->cbs, data->shared);
-	if (newdata->cbs && newdata->cbs->onopen) {
-		newdata->context.fd = fd;
-		newdata->context.shared = newdata->shared;
+	newdata->context.fd = fd;
+	newdata->context.shared = newdata->shared;
+	if (newdata->cbs && newdata->cbs->onopen)
 		newdata->cbs->onopen(&newdata->context);
-	}
 
 	evt.events = EPOLLIN;
 	evt.data.ptr = newdata;
@@ -143,14 +144,13 @@ static void poll_mgmt_accept(poll_mgmt_t *mngr, struct fd_evt_t *data)
 */
 static void poll_mgmt_handle(poll_mgmt_t *mngr, struct fd_evt_t *data)
 {
-	char buf[POLL_MGMT_BUFF_SIZE];
+	static char buf[POLL_MGMT_BUFF_SIZE];
 	int keepalive = 0;
 
 	int r = read(data->fd, buf, POLL_MGMT_BUFF_SIZE);
 	if (r != 0 && data->cbs && data->cbs->onopen) {
-		printf("%d: oh my god!\n", data->fd);
+		printf("%d: oh my god - %d!\n", data->fd, r);
 		buf[r] = '\0';
-		assert(data->context.data != 0);
 		keepalive = data->cbs->onmessage(&data->context, buf, r);
 	}
 
