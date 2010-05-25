@@ -3,330 +3,113 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <request/request.h>
-#include <util/hashtable.h>
+#include <assert.h>
 
-static int get_method(struct state *state);
-static int get_path(struct state *state);
-static int get_version(struct state *state);
-static int get_header(struct state *state);
-static int get_value(struct state *state);
-static int read_request1(struct state *state, const char **http, int *len);
-static int read_request2(struct state *state, const char **http, int *len);
-static int read_header(struct state *state, const char **http, int *len);
-static int read_value(struct state *state, const char **http, int *len);
-static inline void startstate(struct state *state, void *arg);
+state_fn state_method, state_path, state_version, state_header, state_field;
 
-/** 
-* @brief 
-* 
-* @param state
-* 
-* @return 
-*/
-static int get_method(struct state *state)
+int state_method(struct state_t *state, char *buf, size_t nbytes, event_data_t *evt)
 {
-	http_request *request = state->arg;
+	int read = 0;
 
-	if (strncmp("HEAD", state->buf, state->len) == 0)
-		request->method = HTTP_HEAD;
-	if (strncmp("GET", state->buf, state->len) == 0)
-		request->method = HTTP_GET;
-	if (strncmp("POST", state->buf, state->len) == 0)
-		request->method = HTTP_POST;
-	if (strncmp("PUT", state->buf, state->len) == 0)
-		request->method = HTTP_PUT;
-	if (strncmp("DELETE", state->buf, state->len) == 0)
-		request->method = HTTP_DELETE;
-	if (strncmp("TRACE", state->buf, state->len) == 0)
-		request->method = HTTP_TRACE;
-	if (strncmp("OPTIONS", state->buf, state->len) == 0)
-		request->method = HTTP_OPTIONS;
-	if (strncmp("CONNECT", state->buf, state->len) == 0)
-		request->method = HTTP_CONNECT;
-	if (strncmp("PATCH", state->buf, state->len) == 0)
-		request->method = HTTP_PATCH;
+	printf("&&& method\n");
+	while (state->len-- > 0 && (*buf = *state->buf++) != ' ' && read++ < nbytes)
+		++buf;
 
-	state->parse = get_path;
-	state->next = read_request1;
-	return 0;
+	evt->type = HTTP_DATA_METHOD;
+	state->next = state_path;
+
+	return read;
 }
 
-/** 
-* @brief 
-* 
-* @param state
-* 
-* @return 
-*/
-static int get_path(struct state *state)
+int state_path(struct state_t *state, char *buf, size_t nbytes, event_data_t *evt)
 {
-	http_request *request = state->arg;
+	int read = 0;
 
-	char *mark = strchr(state->buf, '?');
-	if (mark) {
-		int off = mark - state->buf;
-		request->path = strndup(state->buf, off);
-		request->args = strndup(mark + 1, state->len - off - 1);
-	}
-	else {
-		request->path = strndup(state->buf, state->len);
-		request->args = NULL;
-	}
+	while (state->len-- > 0 && (*buf = *state->buf++) != ' ' && read++ < nbytes)
+		++buf;
 
-	state->parse = get_version;
-	state->next = read_request2;
-	return 0;
+	evt->type = HTTP_DATA_PATH;
+	state->next = state_version;
+
+	return read;
 }
 
-/** 
-* @brief 
-* 
-* @param state
-* 
-* @return 
-*/
-static int get_version(struct state *state)
+int state_version(struct state_t *state, char *buf, size_t nbytes, event_data_t *evt)
 {
-	http_request *request = state->arg;
-	char match[] = "HTTP/";
-	char *m = match, *c = state->buf;
+	int read = 0;
 
-	while (state->len > 0 && *m == *c) {
-		--state->len;
-		++m;
-		++c;
-	}
+	while (state->len-- > 0 && (*buf = *state->buf++) != '\r' && read++ < nbytes)
+		++buf;
+	++state->buf;
+	--state->len;
 
-	if (state->len == 3 && c[1] == '.') {
-		request->version_major = c[0] - '0';
-		request->version_minor = c[2] - '0';
+	evt->type = HTTP_DATA_VERSION;
+	state->next = state_header;
 
-		state->parse = get_header;
-		state->next = read_header;
-		return 0;
-	}
-	/* error */
-	return 1;
+	return read;
 }
 
-/** 
-* @brief 
-* 
-* @param state
-* 
-* @return 
-*/
-static int get_header(struct state *state)
+int state_header(struct state_t *state, char *buf, size_t nbytes, event_data_t *evt)
 {
-	state->tmp = strndup(state->buf, state->len);
-	state->parse = get_value;
-	state->next = read_value;
-	return 0;
-}
+	int read = 0;
 
-/** 
-* @brief 
-* 
-* @param state
-* 
-* @return 
-*/
-static int get_value(struct state *state)
-{
-	http_request *request = state->arg;
-
-	hashtable_add(&request->headers, state->tmp, strndup(state->buf, state->len));
-	free(state->tmp);
-	state->parse = get_header;
-	state->next = read_header;
-	return 0;
-}
-
-/** 
-* @brief 
-* 
-* @param state
-* @param http
-* @param len
-* 
-* @return 
-*/
-static int read_request1(struct state *state, const char **http, int *len)
-{
-	char *b = state->buf + state->len;
-	int result;
-
-	while ((*len)-- > 0 && (*b++ = *(*http)++) != ' ' && state->len++ < BUFFER_LENGTH);
-	*--b = '\0';
-
-	if (*len == 0)
-		return 0;
-	else {
-		result = state->parse(state);
+	assert(state->len < 2000);
+	if (state->len == 2) {
 		state->len = 0;
-		return result;
-	}
-	return 1;
-}
-
-/** 
-* @brief 
-* 
-* @param state
-* @param http
-* @param len
-* 
-* @return 
-*/
-static int read_request2(struct state *state, const char **http, int *len)
-{
-	char *b = state->buf + state->len;
-	int result;
-
-	while ((*len)-- > 0 && (*b++ = *(*http)++) != '\r' && state->len++ < BUFFER_LENGTH);
-	*--b = '\0';
-
-	if (*len == 0)
+		state->next = NULL;
 		return 0;
-	else if ((*len)-- >= 0 && *(*http)++ == '\n') {
-		result = state->parse(state);
-		state->len = 0;
-		return result;
 	}
-	return 1;
+
+	while (state->len-- > 0 && (*buf = *state->buf++) != ':' && read++ < nbytes)
+		++buf;
+	++state->buf;
+	--state->len;
+
+	evt->type = HTTP_DATA_HEADER;
+	state->next = state_field;
+
+	return read;
 }
 
-/** 
-* @brief 
-* 
-* @param state
-* @param http
-* @param len
-* 
-* @return 
-*/
-static int read_header(struct state *state, const char **http, int *len)
+int state_field(struct state_t *state, char *buf, size_t nbytes, event_data_t *evt)
 {
-	char *b = state->buf + state->len;
-	int result;
+	int read = 0;
 
-	/* if we hit the empty line of \r\n, we're done, the rest is the body */
-	if (state->len == 0) {
-		if (*len >= 2 && (*http)[0] == '\r' && (*http)[1] == '\n') {
-			*len -= 2;
-			*http += 2;
-			state->next = 0;
-			state->done = 1;
-			return 0;
-		}
-	}
+	assert(state->len < 2000);
 
-	while ((*len)-- > 0 && (*b++ = *(*http)++) != ':' && state->len++ < BUFFER_LENGTH);
-	*--b = '\0';
+	while (state->len-- > 0 && (*buf = *state->buf++) != '\r' && read++ < nbytes)
+		++buf;
+	++state->buf;
+	--state->len;
 
-	if (*len == 0)
-		return 0;
-	else if ((*len)-- >= 0 && *(*http)++ == ' ') {
-		result = state->parse(state);
-		state->len = 0;
-		return result;
-	}
-	/* error */
-	return 1;
+	evt->type = HTTP_DATA_FIELD;
+	state->next = state_header;
+
+	return read;
 }
 
-/** 
-* @brief 
-* 
-* @param state
-* @param http
-* @param len
-* 
-* @return 
-*/
-static int read_value(struct state *state, const char **http, int *len)
-{
-	char *b = state->buf + state->len;
-	int result;
+////////////////////////////////////////////////////////////////////////////////
 
-	while ((*len)-- > 0 && (*b++ = *(*http)++) != '\r' && state->len++ < BUFFER_LENGTH);
-	*--b = '\0';
-
-	if (*len == 0)
-		return 0;
-	else if ((*len)-- >= 0 && *(*http)++ == '\n') {
-		result = state->parse(state);
-		state->len = 0;
-		return result;
-	}
-	return 1;
-}
-
-/** 
-* @brief 
-* 
-* @param state
-* @param arg
-*/
-static inline void startstate(struct state *state, void *arg)
-{
-	state->len = 0;
-	state->next = read_request1;
-	state->parse = get_method;
-	state->arg = arg;
-	state->done = 0;
-}
-
-/** 
-* @brief 
-* 
-* @param parser
-*/
 void http_parser_init(http_parser *parser)
 {
-	http_request_init(&parser->request);
-	startstate(&parser->state, &parser->request);
+	//parser->buffer = malloc(bufsize);
+	parser->state.next = state_method;
+	parser->state.len = 0;
 }
 
-/** 
-* @brief 
-* 
-* @param parser
-*/
-void http_parser_free(http_parser *parser)
+void http_parser_set_buffer(http_parser *parser, const char *buf, size_t nbytes)
 {
-	http_request_free(&parser->request);
+	parser->state.buf = buf;
+	parser->state.len = nbytes;
 }
 
-/** 
-* @brief 
-* 
-* @param parser
-* @param buf
-* @param len
-* 
-* @return 
-*/
-int http_parser_read(http_parser *parser, const char *buf, int len)
+int http_parser_next_event(http_parser *parser, char *buf, size_t nbytes, event_data_t *evt)
 {
-	while (len > 0 && parser->state.next) {
-		if (parser->state.next(&parser->state, &buf, &len)) {
-			fprintf(stderr, "Error parsing http request\n");
-			return 1;
-		}
-	}
-	return 0;
-}
+	//http_parser_event *event = &parser->event;
+	int event = -1;
 
-/** 
-* @brief 
-* 
-* @param parser
-* 
-* @return 
-*/
-const http_request const *http_parser_done(http_parser *parser)
-{
-	return parser->state.done ? &parser->request : NULL;
+	if (parser->state.len > 0 && parser->state.next)
+		event = parser->state.next(&parser->state, buf, nbytes, evt);
+
+	return event;
 }

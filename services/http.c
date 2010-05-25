@@ -16,7 +16,7 @@
 
 /** 
 * @brief Context information needed to handle an http connection: A parser for
-* the request and a response object to help generate a response.
+* the http and a response object to help generate a response.
 */
 struct http_context_t {
 	http_parser parser;
@@ -34,6 +34,7 @@ struct http_context_t {
 static struct http_context_t *http_context_new(int fd)
 {
 	struct http_context_t *context = malloc(sizeof(struct http_context_t));
+	printf("&&& http init\n");
 	http_parser_init(&context->parser);
 	http_response_init(&context->response, fd);
 	return context;
@@ -46,10 +47,9 @@ static struct http_context_t *http_context_new(int fd)
 * 
 * @param data The raw pointer to the context.
 */
-void http_context_free(void *data)
+void http_context_gc(void *data)
 {
 	struct http_context_t *context = data;
-	http_parser_free(&context->parser);
 	http_response_end(&context->response);
 	free(data);
 }
@@ -65,12 +65,12 @@ void http_on_open(struct fd_context_t *context)
 {
 	printf("--> opening\n");
 	context->data = http_context_new(context->fd);
-	context->context_free = http_context_free;
+	context->context_gc = http_context_gc;
 }
 
 /** 
 * @brief Function responding to incoming data from an http connection. Incoming
-* data should make up an HTTP request, which we parse and upon completion, delegate
+* data should make up an HTTP http, which we parse and upon completion, delegate
 * further to http service specific callbacks in response to different HTTP methods
 * such as GET or POST.
 * 
@@ -84,39 +84,28 @@ void http_on_open(struct fd_context_t *context)
 */
 int http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes)
 {
+	static char buf[1024]; /* TODO: formalize this */
+
 	struct http_context_t *http_context = context->data;
 	http_parser *parser = &http_context->parser;
-	http_response *response = &http_context->response;
+
+	struct http_events_t *cb = context->shared;
+
+	event_data_t data;
+	int read;
+
+	int keep_alive = 1;
 
 	printf("here - bytes: %d/%d\n%s---\n", nbytes, strlen(msg), msg);
-	http_parser_read(parser, msg, nbytes);
-	printf("--> reading done\n");
 
-	const http_request *request;
-	int result = 0;
-
-	if ((request = http_parser_done(parser))) {
-		printf("%d: got request\n", context->fd);
-		struct http_events_t *events = context->shared;
-		if (events) {
-			switch (request->method) {
-				case HTTP_GET:
-					if (events->GET)
-						result = events->GET(request, response);
-					break;
-				case HTTP_POST:
-					if (events->POST)
-						result = events->POST(request, response);
-					break;
-				case HTTP_PUT:
-					if (events->PUT)
-						result = events->PUT(request, response);
-					break;
-			}
-		}
-		return result;
+	http_parser_set_buffer(parser, msg, nbytes);
+	
+	while ((read = http_parser_next_event(parser, buf, 1024, &data)) > 0) {
+		buf[read] = '\0';
+		keep_alive = cb->cb(buf, read, &data, &http_context->response);
 	}
-	return 1;
+	printf("--- returned: %d\n", read);
+	return keep_alive;
 }
 
 /** 
@@ -131,7 +120,7 @@ void http_on_close(struct fd_context_t *context)
 }
 
 /** 
-* @brief The callbacks specific to handling HTTP requests.
+* @brief The callbacks specific to handling HTTP https.
 */
 static struct fd_cbs_t http_callbacks = {
 	.onopen		= http_on_open,
@@ -141,7 +130,7 @@ static struct fd_cbs_t http_callbacks = {
 
 /** 
 * @brief Start the HTTP service. This sets the provided polling manager to
-* start listening for HTTP requests and handle them.
+* start listening for HTTP https and handle them.
 * 
 * @param http The service data structure.
 * @param mgmt A pointer to the polling manager to manage the connections.
@@ -153,5 +142,5 @@ void http_start(struct service_t *http, poll_mgmt_t *mgmt, int port, struct http
 	http->type = SERVICE_HTTP;
 	http->fd = poll_mgmt_listen(mgmt, port, &http_callbacks, events);//, &http_callbacks, http);
 	http->mgmt = mgmt;
-	http->events = events;
+	//http->cb = cb;
 }

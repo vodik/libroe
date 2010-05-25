@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include "hashtable.h"
 
 static inline char from_hex(char c)
 {
@@ -55,4 +56,34 @@ size_t url_decode(char *dest, const char *src)
 	}
 	*dest = '\0';
 	return written;
+}
+
+/* FIXME: this is a quick and dirty hackish implementation */
+void parse_args(hashtable_t *table, const char *args)
+{
+	char arg[512];
+	char val[512];
+	char dec[512 * 3];
+	char *mode = arg;
+	int len = 0;
+
+	while(*args) {
+		if (*args == '=') {
+			mode = val;
+			len = 0;
+		} else if (*args == '&') {
+			*mode = '\0';
+			len = url_decode(dec, val);
+			hashtable_add(table, arg, strndup(dec, len));
+			mode = arg;
+			len = 0;
+		} else {
+			*mode++ = *args;
+			++len;
+		}
+		++args;
+	}
+	*mode = '\0';
+	len = url_decode(dec, val);
+	hashtable_add(table, arg, strndup(dec, len));
 }
