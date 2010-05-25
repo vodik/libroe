@@ -68,6 +68,31 @@ void http_on_open(struct fd_context_t *context)
 	context->context_gc = http_context_gc;
 }
 
+static int http_method_id(const char *msg, size_t nbytes)
+{
+#define CMP_METHOD(method) if (strncmp(#method, msg, nbytes) == 0) return HTTP_METHOD_##method
+	CMP_METHOD(DELETE);
+	CMP_METHOD(GET);
+	CMP_METHOD(HEAD);
+	CMP_METHOD(POST);
+	CMP_METHOD(PUT);
+
+	CMP_METHOD(CONNECT);
+	CMP_METHOD(OPTIONS);
+	CMP_METHOD(TRACE);
+#ifdef WEBDAV
+	CMP_METHOD(COPY);
+	CMP_METHOD(LOCK);
+	CMP_METHOD(MKCOL);
+	CMP_METHOD(MOVE);
+	CMP_METHOD(PROPFIND);
+	CMP_METHOD(PROPPATCH);
+	CMP_METHOD(UNLOCK);
+#endif
+	return -1;
+#undef CMP_METHOD
+}
+
 /** 
 * @brief Function responding to incoming data from an http connection. Incoming
 * data should make up an HTTP http, which we parse and upon completion, delegate
@@ -95,14 +120,18 @@ int http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes
 	int read;
 
 	int keep_alive = 1;
+	static int send_to;
 
 	printf("here - bytes: %d/%d\n%s---\n", nbytes, strlen(msg), msg);
 
 	http_parser_set_buffer(parser, msg, nbytes);
 	
 	while ((read = http_parser_next_event(parser, buf, 1024, &data)) > 0) {
+		if (data.type == HTTP_DATA_METHOD) {
+			send_to = http_method_id(buf, read);
+		}
 		buf[read] = '\0';
-		keep_alive = cb->cb(buf, read, &data, &http_context->response);
+		keep_alive = cb->cbs[HTTP_METHOD_GET](buf, read, &data, &http_context->response);
 	}
 	printf("--- returned: %d\n", read);
 	return keep_alive;

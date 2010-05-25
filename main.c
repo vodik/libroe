@@ -53,32 +53,8 @@ void send_file(http_response *response, const char *path, const char *mime)
 * 
 * @return 
 */
-int http_request(const char *msg, size_t nbytes, event_data_t *evt, http_response *response)
+int http_get(const char *msg, size_t nbytes, event_data_t *evt, http_response *response)
 {
-	/*printf("HTTP header:\n");
-	printf(" > method:     %i\n", request->method);
-	printf(" > path:       %s\n", request->path);
-	printf(" > args:       %s\n", request->args);
-	printf(" > version:    HTTP/%i.%i\n", request->version_major, request->version_minor);
-	printf(" > host:       %s\n", (char *)hashtable_get(&request->headers, "Host"));
-	printf(" > user-agent: %s\n", (char *)hashtable_get(&request->headers, "User-Agent"));
-	printf("\n");
-
-	if (request->args) {
-		hashtable_t table;
-		hashtable_init(&table, 16, NULL);
-		parse_args(&table, request->args);
-
-		printf("==> Message 1: \"%s\"\n",   (char *)hashtable_get(&table, "msg1"));
-		printf("==> Message 2: \"%s\"\n\n", (char *)hashtable_get(&table, "msg2"));
-		hashtable_cleanup(&table, free);
-	}
-
-	if (strcmp(request->path, "/favicon.ico") == 0)
-		send_file(response, request->path, "image/vnd.microsoft.icon");
-	else
-		send_file(response, request->path, "text/html");
-	return 0;*/
 	switch (evt->type) {
 		case HTTP_DATA_METHOD:
 			printf("we got a method!\n");
@@ -102,10 +78,15 @@ int http_request(const char *msg, size_t nbytes, event_data_t *evt, http_respons
 	return 0;
 }
 
+int http_post(const char *msg, size_t nbytes, event_data_t *evt, http_response *response)
+{
+	printf("--- got a post, handling it like a get for now\n");
+	return http_get(msg, nbytes, evt, response);
+}
+
 static struct http_events_t http_handler = {
-	.cb  = http_request,
-	//.POST = http_get,
-	//.PUT  = NULL,
+	.cbs[HTTP_METHOD_GET]   = http_get,
+	.cbs[HTTP_METHOD_POST]  = http_post,
 };
 
 int main(int argc, char *argv[])
