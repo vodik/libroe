@@ -19,36 +19,6 @@
 #include <services/websocks.h>
 #include "config.h"
 
-/* FIXME: this is a quick and dirty hackish implementation */
-void parse_args(hashtable_t *table, const char *args)
-{
-	char arg[512];
-	char val[512];
-	char dec[512 * 3];
-	char *mode = arg;
-	int len = 0;
-
-	while(*args) {
-		if (*args == '=') {
-			mode = val;
-			len = 0;
-		} else if (*args == '&') {
-			*mode = '\0';
-			len = url_decode(dec, val);
-			hashtable_add(table, arg, strndup(dec, len));
-			mode = arg;
-			len = 0;
-		} else {
-			*mode++ = *args;
-			++len;
-		}
-		++args;
-	}
-	*mode = '\0';
-	len = url_decode(dec, val);
-	hashtable_add(table, arg, strndup(dec, len));
-}
-
 /* TODO: security. This can escape root with a malformed request (browsers filter /../ though) */
 void send_file(http_response *response, const char *path, const char *mime)
 {
@@ -126,7 +96,7 @@ int main(int argc, char *argv[])
 	http_start(&services[0], &mgmt, PORT1, &http_handler);
 	websocks_start(&services[1], &mgmt, PORT2, NULL);
 
-	printf("http://localhost:%d/ws.html\n", PORT1);
+	printf("http://localhost:%d/post.html\n", PORT1);
 
 	int running = 0;
 	while(running == 0) {

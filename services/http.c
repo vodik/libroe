@@ -19,7 +19,7 @@
 * the request and a response object to help generate a response.
 */
 struct http_context_t {
-	http_parser parser;
+	request_parser parser;
 	http_response response;
 };
 
@@ -34,7 +34,7 @@ struct http_context_t {
 static struct http_context_t *http_context_new(int fd)
 {
 	struct http_context_t *context = malloc(sizeof(struct http_context_t));
-	http_parser_init(&context->parser);
+	request_parser_init(&context->parser);
 	http_response_init(&context->response, fd);
 	return context;
 }
@@ -49,7 +49,7 @@ static struct http_context_t *http_context_new(int fd)
 void http_context_free(void *data)
 {
 	struct http_context_t *context = data;
-	http_parser_free(&context->parser);
+	request_parser_free(&context->parser);
 	http_response_end(&context->response);
 	free(data);
 }
@@ -85,17 +85,17 @@ void http_on_open(struct fd_context_t *context)
 int http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes)
 {
 	struct http_context_t *http_context = context->data;
-	http_parser *parser = &http_context->parser;
+	request_parser *parser = &http_context->parser;
 	http_response *response = &http_context->response;
 
 	printf("here - bytes: %d/%d\n%s---\n", nbytes, strlen(msg), msg);
-	http_parser_read(parser, msg, nbytes);
+	request_parser_read(parser, msg, nbytes);
 	printf("--> reading done\n");
 
 	const http_request *request;
 	int result = 0;
 
-	if ((request = http_parser_done(parser))) {
+	if ((request = request_parser_done(parser))) {
 		printf("%d: got request\n", context->fd);
 		struct http_events_t *events = context->shared;
 		if (events) {
