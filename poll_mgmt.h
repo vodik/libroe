@@ -9,13 +9,13 @@ enum {
 	CONN_LISTENING,
 };
 
-typedef void (*context_free_cb)(void *data);
+typedef void (*context_gc_cb)(void *data);
 
 struct fd_context_t {
 	int fd;
 	void *data;
 	void *shared;
-	context_free_cb context_free;
+	context_gc_cb context_gc;
 };
 
 typedef void (*onopen_cb)(struct fd_context_t *context);

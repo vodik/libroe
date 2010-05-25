@@ -54,8 +54,8 @@ static void fd_cleanup(void *arg)
 	if (data->type != CONN_LISTENING) {
 		if (data->cbs && data->cbs->onclose)
 			data->cbs->onclose(&data->context);
-		if (data->context.context_free)
-			data->context.context_free(data->context.data);
+		if (data->context.context_gc)
+			data->context.context_gc(data->context.data);
 	}
 
 	close(data->fd);
@@ -85,7 +85,7 @@ static struct fd_evt_t *poll_mgmt_mkstore(poll_mgmt_t *mngr, int fd, int type, s
 	data->shared = shared;
 
 	data->context.data = NULL;
-	data->context.context_free = NULL;
+	data->context.context_gc = NULL;
 
 	skipset_add(&mngr->store, fd, data);
 	return data;
@@ -162,8 +162,8 @@ static void poll_mgmt_handle(poll_mgmt_t *mngr, struct fd_evt_t *data)
 		if (epoll_ctl(mngr->fd, EPOLL_CTL_DEL, data->fd, NULL) == -1)
 			die("%d: epoll_ctl failed to remove connection\n", __LINE__);
 
-		if (data->context.context_free)
-			data->context.context_free(data->context.data);
+		if (data->context.context_gc)
+			data->context.context_gc(data->context.data);
 
 		close(data->fd);
 		poll_mgmt_removestore(mngr, data->fd);

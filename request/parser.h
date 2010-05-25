@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 
-enum request_methods {
+enum http_methods {
 	HTTP_DELETE = 0x00,
 	HTTP_GET    = 0x01,
 	HTTP_HEAD   = 0x02,
@@ -11,7 +11,7 @@ enum request_methods {
 	HTTP_PUT    = 0x04,
 };
 
-enum request_parser_data {
+enum http_parser_data {
 	HTTP_DATA_METHOD,
 	HTTP_DATA_PATH,
 	HTTP_DATA_QUERY,
@@ -30,17 +30,17 @@ struct state_t;
 typedef int state_fn(struct state_t *state, char *buf, size_t nbytes, event_data_t *data);
 
 struct state_t {
-	char *buf;
+	const char *buf;
 	size_t len;
 	state_fn *next;
 };
 
-typedef struct request_parser {
+typedef struct http_parser {
 	struct state_t state;
-} request_parser;
+} http_parser;
 
-void request_parser_init(request_parser *);
-void request_parser_set_buffer(request_parser *, char *buf, size_t nbytes);
-int request_parser_next_event(request_parser *parser, char *buf, size_t nbytes, event_data_t *evt);
+void http_parser_init(http_parser *);
+void http_parser_set_buffer(http_parser *, const char *buf, size_t nbytes);
+int http_parser_next_event(http_parser *parser, char *buf, size_t nbytes, event_data_t *evt);
 
 #endif

@@ -90,22 +90,22 @@ int state_field(struct state_t *state, char *buf, size_t nbytes, event_data_t *e
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void request_parser_init(request_parser *parser)
+void http_parser_init(http_parser *parser)
 {
 	//parser->buffer = malloc(bufsize);
 	parser->state.next = state_method;
 	parser->state.len = 0;
 }
 
-void request_parser_set_buffer(request_parser *parser, char *buf, size_t nbytes)
+void http_parser_set_buffer(http_parser *parser, const char *buf, size_t nbytes)
 {
 	parser->state.buf = buf;
 	parser->state.len = nbytes;
 }
 
-int request_parser_next_event(request_parser *parser, char *buf, size_t nbytes, event_data_t *evt)
+int http_parser_next_event(http_parser *parser, char *buf, size_t nbytes, event_data_t *evt)
 {
-	//request_parser_event *event = &parser->event;
+	//http_parser_event *event = &parser->event;
 	int event = -1;
 
 	if (parser->state.len > 0 && parser->state.next)
@@ -113,51 +113,3 @@ int request_parser_next_event(request_parser *parser, char *buf, size_t nbytes, 
 
 	return event;
 }
-
-////////////////////////////////////////////////////////////////////////////////
-
-/*static const char test[] =
-	"GET / HTTP/1.1\r\n"
-	"Fuck: off\r\n"
-	"Simon: is sooo awsome\r\n"
-	"Tyler: is a dick\r\n"
-	"\r\n";
-
-int main(int argc, char *argv[])
-{
-	char buf[1024];
-	char *temp = strdup(test);
-
-	request_parser parser;
-	event_data_t data;
-	int read;
-
-	request_parser_init(&parser);
-	request_parser_set_buffer(&parser, temp, strlen(temp));
-	printf("strlen: %d\n", strlen(temp));
-	
-	while ((read = request_parser_next_event(&parser, buf, 1024, &data)) > 0) {
-		buf[read] = '\0';
-		switch (data.type) {
-			case HTTP_DATA_METHOD:
-				printf("we got a method!\n");
-				break;
-			case HTTP_DATA_PATH:
-				printf("we got a path!\n");
-				break;
-			case HTTP_DATA_VERSION:
-				printf("we got version information!\n");
-				break;
-			case HTTP_DATA_HEADER:
-				printf("we got a header\n");
-				break;
-			case HTTP_DATA_FIELD:
-				printf("we got a field\n");
-				break;
-			default:
-				printf("???\n");
-		}
-		printf("read: %d\nbuf: %s\n\n", read, buf);
-	}
-	return 0;
-}*/
