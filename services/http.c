@@ -84,72 +84,28 @@ void http_on_open(struct fd_context_t *context)
 */
 int http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes)
 {
+	static char buf[1024]; /* TODO: formalize this */
+
 	struct http_context_t *http_context = context->data;
 	http_parser *parser = &http_context->parser;
-	/*http_response *response = &http_context->response;*/
 
-	printf("here - bytes: %d/%d\n%s---\n", nbytes, strlen(msg), msg);
-	/*http_parser_read(parser, msg, nbytes);
-	printf("--> reading done\n");
-
-	const http_http *http;
-	int result = 0;
-
-	if ((http = http_parser_done(parser))) {
-		printf("%d: got http\n", context->fd);
-		struct http_events_t *events = context->shared;
-		if (events) {
-			switch (http->method) {
-				case HTTP_GET:
-					if (events->GET)
-						result = events->GET(http, response);
-					break;
-				case HTTP_POST:
-					if (events->POST)
-						result = events->POST(http, response);
-					break;
-				case HTTP_PUT:
-					if (events->PUT)
-						result = events->PUT(http, response);
-					break;
-			}
-		}
-		return result;
-	}
-	return 1;*/
-	char buf[1024];
+	struct http_events_t *cb = context->shared;
 
 	event_data_t data;
 	int read;
 
-	//http_parser_init(&parser);
+	int keep_alive = 1;
+
+	printf("here - bytes: %d/%d\n%s---\n", nbytes, strlen(msg), msg);
+
 	http_parser_set_buffer(parser, msg, nbytes);
 	
 	while ((read = http_parser_next_event(parser, buf, 1024, &data)) > 0) {
 		buf[read] = '\0';
-		switch (data.type) {
-			case HTTP_DATA_METHOD:
-				printf("we got a method!\n");
-				break;
-			case HTTP_DATA_PATH:
-				printf("we got a path!\n");
-				break;
-			case HTTP_DATA_VERSION:
-				printf("we got version information!\n");
-				break;
-			case HTTP_DATA_HEADER:
-				printf("we got a header\n");
-				break;
-			case HTTP_DATA_FIELD:
-				printf("we got a field\n");
-				break;
-			default:
-				printf("???\n");
-		}
-		printf("read: %d\nbuf: %s\n\n", read, buf);
+		keep_alive = cb->cb(buf, read, &data, &http_context->response);
 	}
 	printf("--- returned: %d\n", read);
-	return 1;
+	return keep_alive;
 }
 
 /** 
@@ -186,5 +142,5 @@ void http_start(struct service_t *http, poll_mgmt_t *mgmt, int port, struct http
 	http->type = SERVICE_HTTP;
 	http->fd = poll_mgmt_listen(mgmt, port, &http_callbacks, events);//, &http_callbacks, http);
 	http->mgmt = mgmt;
-	http->events = events;
+	//http->cb = cb;
 }

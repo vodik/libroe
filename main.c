@@ -17,6 +17,7 @@
 #include <poll_mgmt.h>
 #include <services/http.h>
 #include <services/websocks.h>
+#include <request/parser.h>
 #include "config.h"
 
 /* TODO: security. This can escape root with a malformed request (browsers filter /../ though) */
@@ -52,9 +53,9 @@ void send_file(http_response *response, const char *path, const char *mime)
 * 
 * @return 
 */
-int http_get(const http_request const *request, http_response *response)
+int http_request(const char *msg, size_t nbytes, event_data_t *evt, http_response *response)
 {
-	printf("HTTP header:\n");
+	/*printf("HTTP header:\n");
 	printf(" > method:     %i\n", request->method);
 	printf(" > path:       %s\n", request->path);
 	printf(" > args:       %s\n", request->args);
@@ -77,13 +78,34 @@ int http_get(const http_request const *request, http_response *response)
 		send_file(response, request->path, "image/vnd.microsoft.icon");
 	else
 		send_file(response, request->path, "text/html");
+	return 0;*/
+	switch (evt->type) {
+		case HTTP_DATA_METHOD:
+			printf("we got a method!\n");
+			break;
+		case HTTP_DATA_PATH:
+			printf("we got a path!\n");
+			break;
+		case HTTP_DATA_VERSION:
+			printf("we got version information!\n");
+			break;
+		case HTTP_DATA_HEADER:
+			printf("we got a header\n");
+			break;
+		case HTTP_DATA_FIELD:
+			printf("we got a field\n");
+			break;
+		default:
+			printf("???\n");
+	}
+	printf("read: %d\nbuf: %s\n\n", nbytes, msg);
 	return 0;
 }
 
 static struct http_events_t http_handler = {
-	.GET  = http_get,
-	.POST = http_get,
-	.PUT  = NULL,
+	.cb  = http_request,
+	//.POST = http_get,
+	//.PUT  = NULL,
 };
 
 int main(int argc, char *argv[])
