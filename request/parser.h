@@ -37,7 +37,6 @@ struct state_t {
 
 typedef struct request_parser {
 	struct state_t state;
-	request_parser_event event;
 } request_parser;
 
 void request_parser_init(request_parser *);
