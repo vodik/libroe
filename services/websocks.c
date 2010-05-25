@@ -30,7 +30,7 @@ void ws_on_open(struct fd_context_t *context)
 	struct ws_context_t *ws_context = malloc(sizeof(struct ws_context_t));
 	ws_context->authenticated = 0;
 	context->data = ws_context;
-	context->context_free = free;
+	context->context_gc = free;
 }
 
 int ws_on_message(struct fd_context_t *context, const char *msg, size_t nbytes)
