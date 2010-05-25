@@ -7,7 +7,7 @@ struct event_t;
 struct state_t;
 //typedef int state_fn(struct state_t *);/*, const char **, int *);*/
 
-enum http_methods {
+enum request_methods {
 	HTTP_DELETE = 0x00,
 	HTTP_GET    = 0x01,
 	HTTP_HEAD   = 0x02,
@@ -15,7 +15,7 @@ enum http_methods {
 	HTTP_PUT    = 0x04,
 };
 
-enum http_parser_data {
+enum request_parser_data {
 	HTTP_DATA_METHOD,
 	HTTP_DATA_PATH,
 	HTTP_DATA_QUERY,
@@ -26,28 +26,28 @@ enum http_parser_data {
 	HTTP_DATA_FIELD,
 };
 
-enum http_parser_events {
+enum request_parser_events {
 	HTTP_EVENT_DONE,
 	HTTP_EVENT_UPGRADE,
 };
 
 typedef struct {
-	enum http_parser_data type;
+	enum request_parser_data type;
 	const char *buf;
 	size_t nbytes;
 	int done;
-} http_parser_event;
+} request_parser_event;
 
-/*struct http_parser_state {
+/*struct request_parser_state {
 	state_fn *next_state;
-	struct http_event *event;
+	struct request_event *event;
 };*/
 
 typedef struct {
 	int type;
 } event_data_t;
 
-struct http_parser;
+struct request_parser;
 typedef int state_fn(struct state_t *state, char *buf, size_t nbytes, event_data_t *data);
 
 struct state_t {
@@ -56,15 +56,13 @@ struct state_t {
 	state_fn *next;
 };
 
-typedef struct http_parser {
+typedef struct request_parser {
 	struct state_t state;
-	http_parser_event event;
-	char *buf;
-	size_t len;
-} http_parser;
+	request_parser_event event;
+} request_parser;
 
-/*void http_parser_init(http_parser *);
-void http_parser_set_buffer(http_parser *, char *buf, size_t nbytes);
-struct http_event *http_parser_next_event(http_parser *);*/
+void request_parser_init(request_parser *);
+void request_parser_set_buffer(request_parser *, char *buf, size_t nbytes);
+int request_parser_next_event(request_parser *parser, char *buf, size_t nbytes, event_data_t *evt);
 
 #endif

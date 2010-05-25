@@ -11,10 +11,9 @@ int state_method(struct state_t *state, char *buf, size_t nbytes, event_data_t *
 {
 	int read = 0;
 
-	while (state->len-- > 0 && (*buf = *state->buf++) != ' ' && read < nbytes) {
-		++read;
+	printf("&&& method\n");
+	while (state->len-- > 0 && (*buf = *state->buf++) != ' ' && read++ < nbytes)
 		++buf;
-	}
 
 	evt->type = HTTP_DATA_METHOD;
 	state->next = state_path;
@@ -26,10 +25,8 @@ int state_path(struct state_t *state, char *buf, size_t nbytes, event_data_t *ev
 {
 	int read = 0;
 
-	while (state->len-- > 0 && (*buf = *state->buf++) != ' ' && read < nbytes) {
-		++read;
+	while (state->len-- > 0 && (*buf = *state->buf++) != ' ' && read++ < nbytes)
 		++buf;
-	}
 
 	evt->type = HTTP_DATA_PATH;
 	state->next = state_version;
@@ -41,10 +38,8 @@ int state_version(struct state_t *state, char *buf, size_t nbytes, event_data_t 
 {
 	int read = 0;
 
-	while (state->len-- > 0 && (*buf = *state->buf++) != '\r' && read < nbytes) {
-		++read;
+	while (state->len-- > 0 && (*buf = *state->buf++) != '\r' && read++ < nbytes)
 		++buf;
-	}
 	++state->buf;
 	--state->len;
 
@@ -65,10 +60,8 @@ int state_header(struct state_t *state, char *buf, size_t nbytes, event_data_t *
 		return 0;
 	}
 
-	while (state->len-- > 0 && (*buf = *state->buf++) != ':' && read < nbytes) {
-		++read;
+	while (state->len-- > 0 && (*buf = *state->buf++) != ':' && read++ < nbytes)
 		++buf;
-	}
 	++state->buf;
 	--state->len;
 
@@ -84,10 +77,8 @@ int state_field(struct state_t *state, char *buf, size_t nbytes, event_data_t *e
 
 	assert(state->len < 2000);
 
-	while (state->len-- > 0 && (*buf = *state->buf++) != '\r' && read < nbytes) {
-		++read;
+	while (state->len-- > 0 && (*buf = *state->buf++) != '\r' && read++ < nbytes)
 		++buf;
-	}
 	++state->buf;
 	--state->len;
 
@@ -99,24 +90,25 @@ int state_field(struct state_t *state, char *buf, size_t nbytes, event_data_t *e
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void http_parser_init(http_parser *parser)
+void request_parser_init(request_parser *parser)
 {
 	//parser->buffer = malloc(bufsize);
 	parser->state.next = state_method;
+	parser->state.len = 0;
 }
 
-void http_parser_set_buffer(http_parser *parser, char *buf, size_t nbytes)
+void request_parser_set_buffer(request_parser *parser, char *buf, size_t nbytes)
 {
 	parser->state.buf = buf;
 	parser->state.len = nbytes;
 }
 
-int http_parser_next_event(http_parser *parser, char *buf, size_t nbytes, event_data_t *evt)
+int request_parser_next_event(request_parser *parser, char *buf, size_t nbytes, event_data_t *evt)
 {
-	//http_parser_event *event = &parser->event;
+	//request_parser_event *event = &parser->event;
 	int event = -1;
 
-	if (parser->len > 0 && parser->state.next)
+	if (parser->state.len > 0 && parser->state.next)
 		event = parser->state.next(&parser->state, buf, nbytes, evt);
 
 	return event;
@@ -124,9 +116,11 @@ int http_parser_next_event(http_parser *parser, char *buf, size_t nbytes, event_
 
 ////////////////////////////////////////////////////////////////////////////////
 
-static const char test[] =
+/*static const char test[] =
 	"GET / HTTP/1.1\r\n"
 	"Fuck: off\r\n"
+	"Simon: is sooo awsome\r\n"
+	"Tyler: is a dick\r\n"
 	"\r\n";
 
 int main(int argc, char *argv[])
@@ -134,15 +128,15 @@ int main(int argc, char *argv[])
 	char buf[1024];
 	char *temp = strdup(test);
 
-	http_parser parser;
+	request_parser parser;
 	event_data_t data;
 	int read;
 
-	http_parser_init(&parser);
-	http_parser_set_buffer(&parser, temp, strlen(temp));
+	request_parser_init(&parser);
+	request_parser_set_buffer(&parser, temp, strlen(temp));
 	printf("strlen: %d\n", strlen(temp));
 	
-	while ((read = http_parser_next_event(&parser, buf, 1024, &data)) > 0) {
+	while ((read = request_parser_next_event(&parser, buf, 1024, &data)) > 0) {
 		buf[read] = '\0';
 		switch (data.type) {
 			case HTTP_DATA_METHOD:
@@ -166,4 +160,4 @@ int main(int argc, char *argv[])
 		printf("read: %d\nbuf: %s\n\n", read, buf);
 	}
 	return 0;
-}
+}*/

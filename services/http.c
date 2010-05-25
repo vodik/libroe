@@ -34,6 +34,7 @@ struct http_context_t {
 static struct http_context_t *http_context_new(int fd)
 {
 	struct http_context_t *context = malloc(sizeof(struct http_context_t));
+	printf("&&& request init\n");
 	request_parser_init(&context->parser);
 	http_response_init(&context->response, fd);
 	return context;
@@ -49,7 +50,6 @@ static struct http_context_t *http_context_new(int fd)
 void http_context_free(void *data)
 {
 	struct http_context_t *context = data;
-	request_parser_free(&context->parser);
 	http_response_end(&context->response);
 	free(data);
 }
@@ -86,10 +86,10 @@ int http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes
 {
 	struct http_context_t *http_context = context->data;
 	request_parser *parser = &http_context->parser;
-	http_response *response = &http_context->response;
+	/*http_response *response = &http_context->response;*/
 
 	printf("here - bytes: %d/%d\n%s---\n", nbytes, strlen(msg), msg);
-	request_parser_read(parser, msg, nbytes);
+	/*request_parser_read(parser, msg, nbytes);
 	printf("--> reading done\n");
 
 	const http_request *request;
@@ -116,6 +116,40 @@ int http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes
 		}
 		return result;
 	}
+	return 1;*/
+	char buf[1024];
+
+	event_data_t data;
+	int read;
+
+	//request_parser_init(&parser);
+	char *tmp = strdup(tmp);
+	request_parser_set_buffer(parser, tmp, nbytes);
+	
+	while ((read = request_parser_next_event(parser, buf, 1024, &data)) > 0) {
+		buf[read] = '\0';
+		switch (data.type) {
+			case HTTP_DATA_METHOD:
+				printf("we got a method!\n");
+				break;
+			case HTTP_DATA_PATH:
+				printf("we got a path!\n");
+				break;
+			case HTTP_DATA_VERSION:
+				printf("we got version information!\n");
+				break;
+			case HTTP_DATA_HEADER:
+				printf("we got a header\n");
+				break;
+			case HTTP_DATA_FIELD:
+				printf("we got a field\n");
+				break;
+			default:
+				printf("???\n");
+		}
+		printf("read: %d\nbuf: %s\n\n", read, buf);
+	}
+	printf("--- returned: %d\n", read);
 	return 1;
 }
 
