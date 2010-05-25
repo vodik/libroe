@@ -123,8 +123,7 @@ int http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes
 	int read;
 
 	//request_parser_init(&parser);
-	char *tmp = strdup(tmp);
-	request_parser_set_buffer(parser, tmp, nbytes);
+	request_parser_set_buffer(parser, msg, nbytes);
 	
 	while ((read = request_parser_next_event(parser, buf, 1024, &data)) > 0) {
 		buf[read] = '\0';
