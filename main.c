@@ -1,6 +1,3 @@
-#define PORT1 44567
-#define PORT2 33456
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -89,6 +86,9 @@ static struct http_events_t http_handler = {
 	.cbs[HTTP_METHOD_POST]  = http_post,
 };
 
+int http_port      = 44567;
+int websocks_port = 33456;
+
 int main(int argc, char *argv[])
 {
 	poll_mgmt_t mgmt;
@@ -96,10 +96,23 @@ int main(int argc, char *argv[])
 
 	poll_mgmt_start(&mgmt, POLL_EVENTS);
 
-	http_start(&services[0], &mgmt, PORT1, &http_handler);
-	websocks_start(&services[1], &mgmt, PORT2, NULL);
+	char c;
+	while ((c = getopt(argc, argv, "p:w:")) != -1)
+	{
+		switch (c) {
+			case 'p':
+				http_port = atoi(optarg);
+				break;
+			case 'w':
+				websocks_port = atoi(optarg);
+				break;
+		}
+	}
 
-	printf("http://localhost:%d/post.html\n", PORT1);
+	http_start(&services[0], &mgmt, http_port, &http_handler);
+	websocks_start(&services[1], &mgmt, websocks_port, NULL);
+
+	printf("http://localhost:%d/post.html\n", http_port);
 
 	int running = 0;
 	while(running == 0) {
