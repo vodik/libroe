@@ -14,12 +14,14 @@
 #include <smallhttp.h>
 #include "config.h"
 
+#include "test_http.h"
+
 #include <response/response.h>
 
-/* TODO: security. This can escape root with a malformed request (browsers filter /../ though) */
-void send_file(http_response *response, const char *path, const char *mime)
-{
-}
+struct http_ops test_ops = {
+	.port = 33456,
+	.onrequest = test_onrequest,
+};
 
 int main(int argc, char *argv[])
 {
@@ -42,6 +44,12 @@ int main(int argc, char *argv[])
 				break;
 		}
 	}
+
+	test_ops.port = http_port;
+
+	smallhttp_start(&httpd, POLL_EVENTS, &test_ops);
+	smallhttp_run(&httpd);
+	smallhttp_stop(&httpd);
 
 	/*poll_mgmt_start(&mgmt, POLL_EVENTS);
 	http_start(&services[0], &mgmt, http_port, &http_handler);

@@ -12,6 +12,7 @@ typedef struct {
 
 int smallhttp_start(smallhttpd_t *httpd, int size, struct http_ops *ops);
 int smallhttp_open_websocket(smallhttpd_t *httpd, int port);
+int smallhttp_run(smallhttpd_t *httpd);
 void smallhttp_stop(smallhttpd_t *httpd);
 
 #endif
