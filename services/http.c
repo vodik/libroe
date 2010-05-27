@@ -181,10 +181,10 @@ static struct fd_cbs_t http_callbacks = {
 * @param port The port to listen on.
 * @param events HTTP event callbacks to receive GET, POST, etc. messages
 */
-void http_start(struct service_t *http, poll_mgmt_t *mgmt, int port, struct http_events_t *events)
+void http_start(struct service_t *http, poll_mgmt_t *mgmt, struct http_ops *ops)
 {
 	http->type = SERVICE_HTTP;
-	http->fd = poll_mgmt_listen(mgmt, port, &http_callbacks, events);//, &http_callbacks, http);
+	http->fd = poll_mgmt_listen(mgmt, ops->port, &http_callbacks, ops);//, &http_callbacks, http);
 	http->mgmt = mgmt;
 	//http->cb = cb;
 }
