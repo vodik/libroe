@@ -164,13 +164,11 @@ int http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes
 		case HTTP_DATA_METHOD:
 			read = http_parser_next_event(parser, buf, 1024, &data);
 			buf[read] = '\0';
-			printf("data.type: %d\n", data.type);
 			assert(data.type == HTTP_DATA_METHOD);
 			http_context->expected_event = HTTP_DATA_PATH;
 			conn->request.method = http_method_id(buf, read);
 		case HTTP_DATA_PATH:
 			read = http_parser_next_event(parser, buf, 1024, &data);
-			printf("data.type: %d\n", data.type);
 			assert(data.type == HTTP_DATA_PATH);
 			http_context->expected_event = HTTP_DATA_VERSION;
 			conn->request.path = strndup(buf, read);
@@ -178,7 +176,6 @@ int http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes
 		case HTTP_DATA_FRAGMENT:*/
 		case HTTP_DATA_VERSION:
 			read = http_parser_next_event(parser, buf, 1024, &data);
-			printf("data.type: %d\n", data.type);
 			assert(data.type == HTTP_DATA_VERSION);
 			http_context->expected_event = HTTP_DATA_HEADER;
 			conn->request.version = strndup(buf, read);
@@ -192,8 +189,8 @@ int http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes
 		http_context->made_request = 1;
 	}
 
+	/* if interested in headers, send headers */
 	while ((read = http_parser_next_event(parser, buf, 1024, &data)) > 0) {
-		printf("%d: read\n", read);
 		switch (http_context->expected_event) {
 			case HTTP_DATA_HEADER:
 				assert(data.type == HTTP_DATA_HEADER);
@@ -206,6 +203,13 @@ int http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes
 				buf[read] = '\0';
 
 				/* TODO: internal handling of relavant headers here */
+				if (strcmp(http_context->stored_header, "Connection") == 0) {
+					printf("-- have connection header\n");
+					if (strcmp(buf, "close") == 0) {
+						printf("-- connection will close\n");
+						conn->keep_alive = CONN_CLOSE;
+					}
+				}
 
 				if (conn->onheader)
 					conn->onheader(conn, http_context->stored_header, buf);
@@ -215,9 +219,6 @@ int http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes
 				break;
 		}
 	}
-
-	/* if interested in headers, send headers */
-	//while (read = http_parser_next_event());
 
 	/* finally, request a body */
 	conn->makeresponse(conn);
