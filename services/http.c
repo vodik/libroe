@@ -34,6 +34,8 @@ static inline void http_conn_init(http_conn *conn, int fd)
 
 static inline void http_conn_free(http_conn *conn)
 {
+	free(conn->request.path);
+	free(conn->request.version);
 	http_response_end(&conn->response);
 }
 
@@ -136,6 +138,7 @@ int http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes
 
 	struct http_ops *ops = context->shared;
 
+	/* TODO: macroify keep-alive */
 	if (!ops->onrequest)
 		return 0;
 
@@ -145,7 +148,7 @@ int http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes
 		/* send request */
 
 	/* IMPORTANT! DO NOT ADD BREAK STATEMENTS HERE!!! THIS IS INTENTIONAL!!!
-	 * We want to fall through as each segement is processed in this order. The
+	 * We want to fall through as each segment is processed in this order. The
 	 * switch is here in case the entire header doesn't come in one message and
 	 * thus have to resume parsing */
 	/* TODO: check if message is incomplete */
@@ -174,9 +177,14 @@ int http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes
 
 	ops->onrequest(conn);
 
+	if (!conn->makeresponse)
+		return 0;
+
 	/* if interested in headers, send headers */
+	//while (read = http_parser_next_event());
 
 	/* finally, request a body */
+	conn->makeresponse(conn);
 
 	return conn->keep_alive;
 }

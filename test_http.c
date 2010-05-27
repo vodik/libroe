@@ -22,7 +22,7 @@ void static_serve(http_conn *conn)
 	filesize = lseek(fd, 0, SEEK_END);
 	map = mmap(0, filesize, PROT_READ, MAP_SHARED, fd, 0);
 
-	http_response_begin(&conn->response, TRANSFER_ENCODING_NONE, 200, "OK", "text/http", filesize);
+	http_response_begin(&conn->response, TRANSFER_ENCODING_NONE, 200, "OK", "text/html", filesize);
 	http_response_write(&conn->response, map, filesize);
 	http_response_end(&conn->response);
 	printf("--> sent\n");
