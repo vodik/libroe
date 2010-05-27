@@ -22,7 +22,7 @@ void http_response_init(http_response *response, int fd)
 void http_response_begin(http_response *response, int encoding, int code, const char *msg, const char *mime, int content_length)
 {
 	static char buffer[BUFSIZ];
-	int len, fd = response->fd;
+	int len = 0, fd = response->fd;
 
 	response->encoding = encoding;
 	response->sending = 1;

@@ -8,6 +8,11 @@ enum {
 	SERVICE_WEBSOCKS,
 };
 
+enum {
+	CONN_CLOSE,
+	CONN_KEEP_ALIVE,
+};
+
 struct service_t {
 	int type;
 	int fd;

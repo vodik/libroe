@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -pedantic --std=gnu99 -I. -O3 -D_GNU_SOURCE
+CFLAGS = -Wall -pedantic --std=gnu99 -I. -O0 -g -D_GNU_SOURCE
 LDFLAGS =
 
 SRC = main.c smallhttp.c test_http.c poll_mgmt.c services/http.c services/websocks.c request/parser.c response/response.c util/skipset.c util/hashtable.c util/urlencode.c util.c

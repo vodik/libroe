@@ -24,12 +24,14 @@ struct http_context_t {
 	http_conn conn;
 
 	int expected_event;
+	int made_request;
+	char *stored_header;
 };
 
 static inline void http_conn_init(http_conn *conn, int fd)
 {
 	http_response_init(&conn->response, fd);
-	conn->keep_alive = 1;
+	conn->keep_alive = CONN_KEEP_ALIVE;
 }
 
 static inline void http_conn_free(http_conn *conn)
@@ -50,10 +52,12 @@ static inline void http_conn_free(http_conn *conn)
 static struct http_context_t *http_context_new(int fd)
 {
 	struct http_context_t *context = malloc(sizeof(struct http_context_t));
+
 	http_parser_init(&context->parser);
 	http_conn_init(&context->conn, fd);
-
 	context->expected_event = HTTP_DATA_METHOD;
+	context->made_request = 0;
+	context->stored_header = NULL;
 
 	return context;
 }
@@ -68,6 +72,9 @@ static struct http_context_t *http_context_new(int fd)
 void http_context_gc(void *data)
 {
 	struct http_context_t *context = data;
+
+	if (context->stored_header)
+		free(context->stored_header);
 	http_conn_free(&context->conn);
 	free(data);
 }
@@ -140,7 +147,7 @@ int http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes
 
 	/* TODO: macroify keep-alive */
 	if (!ops->onrequest)
-		return 0;
+		return CONN_CLOSE;
 
 	http_parser_set_buffer(parser, msg, nbytes);
 
@@ -177,10 +184,37 @@ int http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes
 			conn->request.version = strndup(buf, read);
 	}
 
-	ops->onrequest(conn);
+	if (!http_context->made_request) {
+		ops->onrequest(conn);
 
-	if (!conn->makeresponse)
-		return 0;
+		if (!conn->makeresponse)
+			return CONN_CLOSE;
+		http_context->made_request = 1;
+	}
+
+	while ((read = http_parser_next_event(parser, buf, 1024, &data)) > 0) {
+		printf("%d: read\n", read);
+		switch (http_context->expected_event) {
+			case HTTP_DATA_HEADER:
+				assert(data.type == HTTP_DATA_HEADER);
+				http_context->expected_event = HTTP_DATA_FIELD;
+				http_context->stored_header = strndup(buf, read);
+				break;
+			case HTTP_DATA_FIELD:
+				assert(data.type == HTTP_DATA_FIELD);
+				http_context->expected_event = HTTP_DATA_HEADER;
+				buf[read] = '\0';
+
+				/* TODO: internal handling of relavant headers here */
+
+				if (conn->onheader)
+					conn->onheader(conn, http_context->stored_header, buf);
+				
+				free(http_context->stored_header);
+				http_context->stored_header = 0;
+				break;
+		}
+	}
 
 	/* if interested in headers, send headers */
 	//while (read = http_parser_next_event());

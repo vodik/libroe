@@ -17,7 +17,7 @@ typedef struct http_conn {
 
 	int keep_alive;
 
-	void (*onheaders)(struct http_conn *conn, const char *header, const char *field);
+	void (*onheader)(struct http_conn *conn, const char *header, const char *field);
 	void (*makeresponse)(struct http_conn *conn);
 } http_conn;
 

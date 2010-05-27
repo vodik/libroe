@@ -36,9 +36,9 @@ void static_serve(http_conn *conn)
 void logger(http_conn *conn, const char *header, const char *field)
 {
 	if (strcmp(header, "User-Agent") == 0) {
-		FILE *fp = fopen("useragents", "rw+");
-		fprintf(fp, "got: %s\n", field);
-		fclose(fp);
+		FILE *file = fopen("useragents", "a+");
+		fprintf(file, "=== user-agent: %s\n", field);
+		fclose(file);
 	}
 }
 
@@ -51,6 +51,6 @@ void test_onrequest(http_conn *conn)
 
 	printf(":: logging request\n   > method:\t%d\n   > path:\t%s\n", conn->request.method, conn->request.path);
 
-	conn->onheaders = logger;
+	conn->onheader = logger;
 	conn->makeresponse = static_serve;
 }
