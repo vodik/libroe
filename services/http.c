@@ -21,9 +21,19 @@
 */
 struct http_context_t {
 	http_parser parser;
-	http_response response;
-	//http_request_t request;
+	http_conn conn;
 };
+
+static inline void http_conn_init(http_conn *conn, int fd)
+{
+	http_response_init(&conn->response, fd);
+	conn->keep_alive = 1;
+}
+
+static inline void http_conn_free(http_conn *conn)
+{
+	http_response_end(&conn->response);
+}
 
 /** 
 * @brief Helper function to generate a new context.
@@ -36,9 +46,8 @@ struct http_context_t {
 static struct http_context_t *http_context_new(int fd)
 {
 	struct http_context_t *context = malloc(sizeof(struct http_context_t));
-	printf("&&& http init\n");
 	http_parser_init(&context->parser);
-	http_response_init(&context->response, fd);
+	http_conn_init(&context->conn, fd);
 	return context;
 }
 
@@ -52,7 +61,7 @@ static struct http_context_t *http_context_new(int fd)
 void http_context_gc(void *data)
 {
 	struct http_context_t *context = data;
-	http_response_end(&context->response);
+	http_conn_free(&context->conn);
 	free(data);
 }
 
@@ -114,10 +123,21 @@ int http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes
 {
 	//static char buf[1024]; /* TODO: formalize this */
 
-	/*struct http_context_t *http_context = context->data;
+	struct http_context_t *http_context = context->data;
 	http_parser *parser = &http_context->parser;
+	http_conn *conn = &http_context->conn;
 
-	struct http_events_t *cb = context->shared;
+	/* if haven't, parse request */
+		/* send request */
+	
+	/* if interested in headers, send headers */
+
+	/* finally, request a body */
+
+	return conn->keep_alive;
+}
+/******************************************************************************/
+	/*struct http_events_t *cb = context->shared;
 
 	event_data_t data;
 	int read;
@@ -150,8 +170,7 @@ int http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes
 	//}
 	/*printf("--- returned: %d\n", read);
 	return keep_alive;*/
-	return 1;
-}
+/******************************************************************************/
 
 /** 
 * @brief Function responding to a connection closing. Currently a nop.
