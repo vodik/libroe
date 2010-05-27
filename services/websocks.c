@@ -79,3 +79,23 @@ void websocks_start(struct service_t *ws, poll_mgmt_t *mgmt, struct ws_ops *ops)
 	ws->mgmt = mgmt;
 	//ws->events = events;
 }
+
+/******************************************************************************/
+
+void ws_close(ws_t *ws)
+{
+	close(ws->fd);
+}
+
+void ws_send(ws_t *ws, const char *buf, size_t nbytes)
+{
+	char _buf[nbytes + 2];
+	int i;
+
+	*_buf++ = 0x00;
+	for (i = 0; i < nbytes; ++i)
+		*_buff++ = *buf++;
+	*_buf = 0xff;
+
+	write(ws->fd, _buf, nbytes + 2);
+}
