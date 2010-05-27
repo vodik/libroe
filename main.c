@@ -19,8 +19,13 @@
 #include <response/response.h>
 
 struct http_ops test_ops = {
-	.port = 33456,
+	.port = 11234,
 	.onrequest = test_onrequest,
+};
+
+struct ws_ops ws_ops = {
+	.port = 33456,
+	//.onmessage = NULL,//test_onmessage,
 };
 
 int main(int argc, char *argv[])
@@ -29,42 +34,23 @@ int main(int argc, char *argv[])
 	struct service_t services[2];*/
 
 	smallhttpd_t httpd;
-	int http_port     = 44567;
-	int websocks_port = 33456;
 	char c;
 
 	while ((c = getopt(argc, argv, "p:w:")) != -1)
 	{
 		switch (c) {
 			case 'p':
-				http_port = atoi(optarg);
+				test_ops.port = atoi(optarg);
 				break;
 			case 'w':
-				websocks_port = atoi(optarg);
+				ws_ops.port = atoi(optarg);
 				break;
 		}
 	}
 
-	test_ops.port = http_port;
-
 	smallhttp_start(&httpd, POLL_EVENTS, &test_ops);
+	smallhttp_open_websocket(&httpd, &ws_ops);
+
 	smallhttp_run(&httpd);
 	smallhttp_stop(&httpd);
-
-	/*poll_mgmt_start(&mgmt, POLL_EVENTS);
-	http_start(&services[0], &mgmt, http_port, &http_handler);
-	websocks_start(&services[1], &mgmt, websocks_port, NULL);
-
-	printf("http://localhost:%d/post.html\n", http_port);
-
-	int running = 0;
-	while(running == 0) {
-		printf("--> loop start\n");
-		running = poll_mgmt_poll(&mgmt, -1);
-		if (running == 0)
-			printf("--> loop repeat - %d, %s\n", running, strerror(running));
-	}
-	
-	printf("==> ending - %d, %s\n", running, strerror(running));
-	poll_mgmt_stop(&mgmt);*/
 }

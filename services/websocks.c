@@ -21,7 +21,7 @@ const char message[] =
 	"HTTP/1.1 101 Web Socket Protocol Handshake\r\n"
 	"Upgrade: WebSocket\r\n"
 	"Connection: Upgrade\r\n"
-	"WebSocket-Origin: http://localhost:44567\r\n"
+	"WebSocket-Origin: http://localhost:11234\r\n"
 	"WebSocket-Location: ws://localhost:33456/service\r\n"
 	"\r\n";
 
@@ -72,10 +72,10 @@ static struct fd_cbs_t ws_callbacks = {
 	.onclose	= ws_on_close,
 };
 
-void websocks_start(struct service_t *ws, poll_mgmt_t *mgmt, int port, struct ws_events_t *events)
+void websocks_start(struct service_t *ws, poll_mgmt_t *mgmt, struct ws_ops *ops)
 {
 	ws->type = SERVICE_WEBSOCKS;
-	ws->fd = poll_mgmt_listen(mgmt, port, &ws_callbacks, events);//, &ws_callbacks, ws);
+	ws->fd = poll_mgmt_listen(mgmt, ops->port, &ws_callbacks, ops);
 	ws->mgmt = mgmt;
-	ws->events = events;
+	//ws->events = events;
 }

@@ -167,6 +167,8 @@ int http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes
 			assert(data.type == HTTP_DATA_PATH);
 			http_context->expected_event = HTTP_DATA_VERSION;
 			conn->request.path = strndup(buf, read);
+		/*case HTTP_DATA_QUERY:
+		case HTTP_DATA_FRAGMENT:*/
 		case HTTP_DATA_VERSION:
 			read = http_parser_next_event(parser, buf, 1024, &data);
 			printf("data.type: %d\n", data.type);
@@ -185,7 +187,6 @@ int http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes
 
 	/* finally, request a body */
 	conn->makeresponse(conn);
-
 	return conn->keep_alive;
 }
 /******************************************************************************/

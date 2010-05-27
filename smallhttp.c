@@ -16,9 +16,9 @@ int smallhttp_start(smallhttpd_t *httpd, int size, struct http_ops *ops)
 	return 0;
 }
 
-int smallhttp_open_websocket(smallhttpd_t *httpd, int port)
+int smallhttp_open_websocket(smallhttpd_t *httpd, struct ws_ops *ops)
 {
-	//websocks_start(&httpd->services[1], &httpd->polling, port, &websocks_handler);
+	websocks_start(&httpd->services[1], &httpd->polling, ops);
 	return 0;
 }
 
