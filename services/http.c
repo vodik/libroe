@@ -22,7 +22,7 @@
 struct http_context_t {
 	http_parser parser;
 	http_response response;
-	struct http_request_t request;
+	//http_request_t request;
 };
 
 /** 
@@ -112,7 +112,7 @@ static int http_method_id(const char *msg, size_t nbytes)
 
 int http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes)
 {
-	static char buf[1024]; /* TODO: formalize this */
+	//static char buf[1024]; /* TODO: formalize this */
 
 	/*struct http_context_t *http_context = context->data;
 	http_parser *parser = &http_context->parser;
@@ -150,6 +150,7 @@ int http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes
 	//}
 	/*printf("--- returned: %d\n", read);
 	return keep_alive;*/
+	return 1;
 }
 
 /** 

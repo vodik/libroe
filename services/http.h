@@ -5,19 +5,19 @@
 #include <response/response.h>
 #include <request/parser.h>
 
-typedef struct request_data {
+typedef struct {
 	int method;
 	char *url, *query, *frag;
-};
+} request_data;
 
-typedef struct {
+typedef struct http_conn {
 	request_data request;
 	http_response response;
 
 	int keep_alive;
 
-	void (*onheaders)(http_conn *conn, const char *header, const char *field);
-	void (*makeresponse)(http_conn *conn);
+	void (*onheaders)(struct http_conn *conn, const char *header, const char *field);
+	void (*makeresponse)(struct http_conn *conn);
 } http_conn;
 
 struct http_ops {
