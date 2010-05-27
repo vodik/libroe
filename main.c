@@ -11,11 +11,10 @@
 
 #include <util.h>
 #include <util/urlencode.h>
-#include <poll_mgmt.h>
-#include <services/http.h>
-#include <services/websocks.h>
-#include <request/parser.h>
+#include <smallhttp.h>
 #include "config.h"
+
+#include <response/response.h>
 
 /* TODO: security. This can escape root with a malformed request (browsers filter /../ though) */
 void send_file(http_response *response, const char *path, const char *mime)
@@ -50,53 +49,35 @@ void send_file(http_response *response, const char *path, const char *mime)
 * 
 * @return 
 */
-int http_get(const char *msg, size_t nbytes, event_data_t *evt, http_response *response)
+/*int http_get(http_conn *conn, const char *path, size_t len, http_response *response)
 {
-	switch (evt->type) {
-		case HTTP_DATA_METHOD:
-			printf("we got a method!\n");
-			break;
-		case HTTP_DATA_PATH:
-			printf("we got a path!\n");
-			break;
-		case HTTP_DATA_VERSION:
-			printf("we got version information!\n");
-			break;
-		case HTTP_DATA_HEADER:
-			printf("we got a header\n");
-			break;
-		case HTTP_DATA_FIELD:
-			printf("we got a field\n");
-			break;
-		default:
-			printf("???\n");
+	if (strcmp(path, "/favico.ico")) {
+		http_conn_set_header_reader(logger);
+		http_conn_set_server(favico_server);
 	}
-	printf("read: %d\nbuf: %s\n\n", nbytes, msg);
-	return 0;
 }
 
-int http_post(const char *msg, size_t nbytes, event_data_t *evt, http_response *response)
+int http_post(struct http_request_t *request, http_response *response)
 {
 	printf("--- got a post, handling it like a get for now\n");
-	return http_get(msg, nbytes, evt, response);
+	return http_get(request, response);
 }
 
 static struct http_events_t http_handler = {
 	.cbs[HTTP_METHOD_GET]   = http_get,
 	.cbs[HTTP_METHOD_POST]  = http_post,
-};
-
-int http_port      = 44567;
-int websocks_port = 33456;
+};*/
 
 int main(int argc, char *argv[])
 {
-	poll_mgmt_t mgmt;
-	struct service_t services[2];
+	/*poll_mgmt_t mgmt;
+	struct service_t services[2];*/
 
-	poll_mgmt_start(&mgmt, POLL_EVENTS);
-
+	smallhttpd_t httpd;
+	int http_port     = 44567;
+	int websocks_port = 33456;
 	char c;
+
 	while ((c = getopt(argc, argv, "p:w:")) != -1)
 	{
 		switch (c) {
@@ -109,6 +90,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	/*poll_mgmt_start(&mgmt, POLL_EVENTS);
 	http_start(&services[0], &mgmt, http_port, &http_handler);
 	websocks_start(&services[1], &mgmt, websocks_port, NULL);
 
@@ -123,6 +105,5 @@ int main(int argc, char *argv[])
 	}
 	
 	printf("==> ending - %d, %s\n", running, strerror(running));
-	//service_end(&mgmt, services[0]);
-	poll_mgmt_stop(&mgmt);
+	poll_mgmt_stop(&mgmt);*/
 }

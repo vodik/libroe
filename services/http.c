@@ -10,6 +10,7 @@
 #include <sys/epoll.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <assert.h>
 
 #include <request/parser.h>
 #include <util.h>
@@ -21,6 +22,7 @@
 struct http_context_t {
 	http_parser parser;
 	http_response response;
+	struct http_request_t request;
 };
 
 /** 
@@ -107,11 +109,12 @@ static int http_method_id(const char *msg, size_t nbytes)
 * @return A keep-alive state. The polling subsystem closes the connection if this is
 * not set.
 */
+
 int http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes)
 {
 	static char buf[1024]; /* TODO: formalize this */
 
-	struct http_context_t *http_context = context->data;
+	/*struct http_context_t *http_context = context->data;
 	http_parser *parser = &http_context->parser;
 
 	struct http_events_t *cb = context->shared;
@@ -120,21 +123,33 @@ int http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes
 	int read;
 
 	int keep_alive = 1;
-	static int send_to;
 
 	printf("here - bytes: %d/%d\n%s---\n", nbytes, strlen(msg), msg);
-
 	http_parser_set_buffer(parser, msg, nbytes);
+
+	//struct http_request_t request;
+
+	read = http_parser_next_event(parser, buf, 1024, &data);
+	assert(data.type == HTTP_DATA_METHOD);
+	buf[read] = '\0';
+	int method = http_method_id(buf, read);
+
+	read = http_parser_next_event(parser, buf, 1024, &data);
+	assert(data.type == HTTP_DATA_PATH);
+	buf[read] = '\0';
+
+	keep_alive = cb->cbs[http_context->request.method](&http_context->request, &http_context->response);
+
+	free(http_context->request.url);*/
 	
-	while ((read = http_parser_next_event(parser, buf, 1024, &data)) > 0) {
+	/*while ((read = http_parser_next_event(parser, buf, 1024, &data)) > 0) {
 		if (data.type == HTTP_DATA_METHOD) {
 			send_to = http_method_id(buf, read);
 		}
-		buf[read] = '\0';
-		keep_alive = cb->cbs[HTTP_METHOD_GET](buf, read, &data, &http_context->response);
-	}
-	printf("--- returned: %d\n", read);
-	return keep_alive;
+		buf[read] = '\0';*/
+	//}
+	/*printf("--- returned: %d\n", read);
+	return keep_alive;*/
 }
 
 /** 
