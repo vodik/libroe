@@ -22,6 +22,8 @@
 struct http_context_t {
 	http_parser parser;
 	http_conn conn;
+
+	int expected_event;
 };
 
 static inline void http_conn_init(http_conn *conn, int fd)
@@ -48,6 +50,9 @@ static struct http_context_t *http_context_new(int fd)
 	struct http_context_t *context = malloc(sizeof(struct http_context_t));
 	http_parser_init(&context->parser);
 	http_conn_init(&context->conn, fd);
+
+	context->expected_event = HTTP_DATA_METHOD;
+
 	return context;
 }
 
@@ -121,15 +126,54 @@ static int http_method_id(const char *msg, size_t nbytes)
 
 int http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes)
 {
-	//static char buf[1024]; /* TODO: formalize this */
+	static char buf[1024]; /* TODO: formalize this */
+	event_data_t data;
+	int read = 0;
 
 	struct http_context_t *http_context = context->data;
 	http_parser *parser = &http_context->parser;
 	http_conn *conn = &http_context->conn;
 
+	struct http_ops *ops = context->shared;
+
+	if (!ops->onrequest)
+		return 0;
+
+	http_parser_set_buffer(parser, msg, nbytes);
+
 	/* if haven't, parse request */
 		/* send request */
-	
+
+	/* IMPORTANT! DO NOT ADD BREAK STATEMENTS HERE!!! THIS IS INTENTIONAL!!!
+	 * We want to fall through as each segement is processed in this order. The
+	 * switch is here in case the entire header doesn't come in one message and
+	 * thus have to resume parsing */
+	/* TODO: check if message is incomplete */
+	/* TODO: macroify */
+	switch (http_context->expected_event) {
+		case HTTP_DATA_METHOD:
+			read = http_parser_next_event(parser, buf, 1024, &data);
+			buf[read] = '\0';
+			printf("data.type: %d\n", data.type);
+			assert(data.type == HTTP_DATA_METHOD);
+			http_context->expected_event = HTTP_DATA_PATH;
+			conn->request.method = http_method_id(buf, read);
+		case HTTP_DATA_PATH:
+			read = http_parser_next_event(parser, buf, 1024, &data);
+			printf("data.type: %d\n", data.type);
+			assert(data.type == HTTP_DATA_PATH);
+			http_context->expected_event = HTTP_DATA_VERSION;
+			conn->request.path = strndup(buf, read);
+		case HTTP_DATA_VERSION:
+			read = http_parser_next_event(parser, buf, 1024, &data);
+			printf("data.type: %d\n", data.type);
+			assert(data.type == HTTP_DATA_VERSION);
+			http_context->expected_event = HTTP_DATA_HEADER;
+			conn->request.version = strndup(buf, read);
+	}
+
+	ops->onrequest(conn);
+
 	/* if interested in headers, send headers */
 
 	/* finally, request a body */
@@ -139,7 +183,6 @@ int http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes
 /******************************************************************************/
 	/*struct http_events_t *cb = context->shared;
 
-	event_data_t data;
 	int read;
 
 	int keep_alive = 1;

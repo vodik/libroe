@@ -13,7 +13,7 @@ void static_serve(http_conn *conn)
 	char *map;
 
 	printf("--> sending file\n");
-	fd = open(conn->request.url + 1, O_RDONLY); /* paths start with / */
+	fd = open(conn->request.path + 1, O_RDONLY); /* paths start with / */
 	if (fd == -1) {
 		http_response_error(&conn->response, 404, "Not Found");
 		return;
@@ -44,10 +44,12 @@ void logger(http_conn *conn, const char *header, const char *field)
 
 void test_onrequest(http_conn *conn)
 {
-	if (!conn->request.method != HTTP_METHOD_GET) {
+	if (conn->request.method != HTTP_METHOD_GET) {
 		fprintf(stderr, "only GET supported at the moment\n");
 		conn->keep_alive = 0;
 	}
+
+	printf(":: logging request\n   > method:\t%d\n   > path:\t%s\n", conn->request.method, conn->request.path);
 
 	conn->onheaders = logger;
 	conn->makeresponse = static_serve;

@@ -7,7 +7,8 @@
 
 typedef struct {
 	int method;
-	char *url, *query, *frag;
+	char *path;//, *query, *frag;
+	char *version;
 } request_data;
 
 typedef struct http_conn {
