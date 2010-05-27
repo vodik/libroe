@@ -5,11 +5,13 @@
 
 typedef struct {
 	int fd;
+	char *path;
+	int status;
 } ws_t;
 
 struct ws_ops {
 	int port;
-	void (*onconnect)(ws_t *ws, const char *path);
+	void (*onrequest)(ws_t *ws);
 };
 
 void websocks_start(struct service_t *ws, poll_mgmt_t *mgmt, struct ws_ops *ops);
