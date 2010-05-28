@@ -7,7 +7,8 @@
 
 state_fn state_method, state_path, state_version, state_header, state_field;
 
-int state_method(struct state_t *state, char *buf, size_t nbytes, event_data_t *evt)
+int
+state_method(struct state_t *state, char *buf, size_t nbytes, event_data_t *evt)
 {
 	int read = 0;
 
@@ -21,7 +22,8 @@ int state_method(struct state_t *state, char *buf, size_t nbytes, event_data_t *
 	return read;
 }
 
-int state_path(struct state_t *state, char *buf, size_t nbytes, event_data_t *evt)
+int
+state_path(struct state_t *state, char *buf, size_t nbytes, event_data_t *evt)
 {
 	int read = 0;
 
@@ -34,7 +36,8 @@ int state_path(struct state_t *state, char *buf, size_t nbytes, event_data_t *ev
 	return read;
 }
 
-int state_version(struct state_t *state, char *buf, size_t nbytes, event_data_t *evt)
+int
+state_version(struct state_t *state, char *buf, size_t nbytes, event_data_t *evt)
 {
 	int read = 0;
 
@@ -49,7 +52,8 @@ int state_version(struct state_t *state, char *buf, size_t nbytes, event_data_t 
 	return read;
 }
 
-int state_header(struct state_t *state, char *buf, size_t nbytes, event_data_t *evt)
+int
+state_header(struct state_t *state, char *buf, size_t nbytes, event_data_t *evt)
 {
 	int read = 0;
 
@@ -71,7 +75,8 @@ int state_header(struct state_t *state, char *buf, size_t nbytes, event_data_t *
 	return read;
 }
 
-int state_field(struct state_t *state, char *buf, size_t nbytes, event_data_t *evt)
+int
+state_field(struct state_t *state, char *buf, size_t nbytes, event_data_t *evt)
 {
 	int read = 0;
 
@@ -90,22 +95,23 @@ int state_field(struct state_t *state, char *buf, size_t nbytes, event_data_t *e
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void http_parser_init(http_parser *parser)
+void
+http_parser_init(http_parser *parser)
 {
-	//parser->buffer = malloc(bufsize);
 	parser->state.next = state_method;
 	parser->state.len = 0;
 }
 
-void http_parser_set_buffer(http_parser *parser, const char *buf, size_t nbytes)
+void
+http_parser_set_buffer(http_parser *parser, const char *buf, size_t nbytes)
 {
 	parser->state.buf = buf;
 	parser->state.len = nbytes;
 }
 
-int http_parser_next_event(http_parser *parser, char *buf, size_t nbytes, event_data_t *evt)
+int
+http_parser_next_event(http_parser *parser, char *buf, size_t nbytes, event_data_t *evt)
 {
-	//http_parser_event *event = &parser->event;
 	int event = -1;
 
 	if (parser->state.len > 0 && parser->state.next)

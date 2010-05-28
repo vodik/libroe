@@ -7,7 +7,8 @@
 #include <unistd.h>
 #include <sys/mman.h>
 
-void static_serve(http_conn *conn)
+static void
+static_serve(http_conn *conn)
 {
 	int fd, filesize;
 	char *map;
@@ -33,7 +34,14 @@ void static_serve(http_conn *conn)
 	conn->keep_alive = 0;
 }
 
-void logger(http_conn *conn, const char *header, const char *field)
+static void
+echo_message(ws_t *ws, const char *msg, size_t len)
+{
+	ws_send(ws, msg, len);
+}
+
+static void
+logger(http_conn *conn, const char *header, const char *field)
 {
 	if (strcmp(header, "User-Agent") == 0) {
 		FILE *file = fopen("useragents", "a+");
@@ -42,7 +50,10 @@ void logger(http_conn *conn, const char *header, const char *field)
 	}
 }
 
-void test_onrequest(http_conn *conn)
+////////////////////////////////////////////////////////////////////////////////
+
+void
+test_onrequest(http_conn *conn)
 {
 	if (conn->request.method != HTTP_METHOD_GET) {
 		fprintf(stderr, "only GET supported at the moment\n");
@@ -53,4 +64,13 @@ void test_onrequest(http_conn *conn)
 
 	conn->onheader = logger;
 	conn->makeresponse = static_serve;
+}
+
+void
+ws_onrequest(ws_t *ws)
+{
+	if (strcmp(ws->path, "/echo") == 0) {
+		/* TODO */
+	} else
+		ws_close(ws);
 }

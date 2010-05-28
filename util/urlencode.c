@@ -5,18 +5,21 @@
 #include <ctype.h>
 #include "hashtable.h"
 
-static inline char from_hex(char c)
+static inline char
+from_hex(char c)
 {
 	return isdigit(c) ? c - '0' : tolower(c) - 'a' + 10;
 }
 
-static inline char to_hex(char code)
+static inline char
+to_hex(char code)
 {
 	static char hex[] = "0123456789abcdef";
 	return hex[code & 0xf];
 }
 
-size_t url_encode(char *dest, const char *src)
+size_t
+url_encode(char *dest, const char *src)
 {
 	size_t written = 0;
 	while (*src) {
@@ -37,7 +40,8 @@ size_t url_encode(char *dest, const char *src)
 	return written;
 }
 
-size_t url_decode(char *dest, const char *src)
+size_t
+url_decode(char *dest, const char *src)
 {
 	size_t written = 0;
 	while (*src) {
@@ -59,7 +63,8 @@ size_t url_decode(char *dest, const char *src)
 }
 
 /* FIXME: this is a quick and dirty hackish implementation */
-void parse_args(hashtable_t *table, const char *args)
+void
+parse_args(hashtable_t *table, const char *args)
 {
 	char arg[512];
 	char val[512];

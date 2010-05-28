@@ -28,13 +28,15 @@ struct http_context_t {
 	char *stored_header;
 };
 
-static inline void http_conn_init(http_conn *conn, int fd)
+static inline void
+http_conn_init(http_conn *conn, int fd)
 {
 	http_response_init(&conn->response, fd);
 	conn->keep_alive = CONN_KEEP_ALIVE;
 }
 
-static inline void http_conn_free(http_conn *conn)
+static inline void
+http_conn_free(http_conn *conn)
 {
 	free(conn->request.path);
 	free(conn->request.version);
@@ -49,7 +51,8 @@ static inline void http_conn_free(http_conn *conn)
 * 
 * @return Returns a new context.
 */
-static struct http_context_t *http_context_new(int fd)
+static struct http_context_t *
+http_context_new(int fd)
 {
 	struct http_context_t *context = malloc(sizeof(struct http_context_t));
 
@@ -69,7 +72,8 @@ static struct http_context_t *http_context_new(int fd)
 * 
 * @param data The raw pointer to the context.
 */
-void http_context_gc(void *data)
+void
+http_context_gc(void *data)
 {
 	struct http_context_t *context = data;
 
@@ -86,14 +90,16 @@ void http_context_gc(void *data)
 * 
 * @param context A structure to store the context in.
 */
-void http_on_open(struct fd_context_t *context)
+void
+http_on_open(struct fd_context_t *context)
 {
 	printf("--> opening\n");
 	context->data = http_context_new(context->fd);
 	context->context_gc = http_context_gc;
 }
 
-static int http_method_id(const char *msg, size_t nbytes)
+static int
+http_method_id(const char *msg, size_t nbytes)
 {
 #define CMP_METHOD(method) if (strncmp(#method, msg, nbytes) == 0) return HTTP_METHOD_##method
 	CMP_METHOD(DELETE);
@@ -133,7 +139,8 @@ static int http_method_id(const char *msg, size_t nbytes)
 * not set.
 */
 
-int http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes)
+int
+http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes)
 {
 	static char buf[1024]; /* TODO: formalize this */
 	event_data_t data;
@@ -266,7 +273,8 @@ int http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes
 * 
 * @param context A structure storing the context.
 */
-void http_on_close(struct fd_context_t *context)
+void
+http_on_close(struct fd_context_t *context)
 {
 }
 
@@ -288,7 +296,8 @@ static struct fd_cbs_t http_callbacks = {
 * @param port The port to listen on.
 * @param events HTTP event callbacks to receive GET, POST, etc. messages
 */
-void http_start(struct service_t *http, poll_mgmt_t *mgmt, struct http_ops *ops)
+void
+http_start(struct service_t *http, poll_mgmt_t *mgmt, struct http_ops *ops)
 {
 	http->type = SERVICE_HTTP;
 	http->fd = poll_mgmt_listen(mgmt, ops->port, &http_callbacks, ops);//, &http_callbacks, http);

@@ -6,7 +6,8 @@
 #include <stdarg.h>
 #include <errno.h>
 
-void die(const char *err, ...)
+void
+die(const char *err, ...)
 {
 	va_list args;
 

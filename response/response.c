@@ -12,14 +12,16 @@
 #include <netinet/in.h>
 #include <util/hashtable.h>
 
-void http_response_init(http_response *response, int fd)
+void
+http_response_init(http_response *response, int fd)
 {
 	response->sending = 0;
 	response->fd = fd;
 	response->encoding = TRANSFER_ENCODING_NONE;
 }
 
-void http_response_begin(http_response *response, int encoding, int code, const char *msg, const char *mime, int content_length)
+void
+http_response_begin(http_response *response, int encoding, int code, const char *msg, const char *mime, int content_length)
 {
 	static char buffer[BUFSIZ];
 	int len = 0, fd = response->fd;
@@ -38,7 +40,8 @@ void http_response_begin(http_response *response, int encoding, int code, const 
 	send(fd, buffer, len, 0);
 }
 
-void http_response_error(http_response *response, int code, const char *msg)
+void
+http_response_error(http_response *response, int code, const char *msg)
 {
 	static char buffer[BUFSIZ];
 	int len, fd = response->fd;
@@ -48,7 +51,8 @@ void http_response_error(http_response *response, int code, const char *msg)
 	send(fd, buffer, len, 0);
 }
 
-void http_response_write(http_response *response, const char *data, size_t nbytes)
+void
+http_response_write(http_response *response, const char *data, size_t nbytes)
 {
 	static char buffer[10];
 
@@ -69,7 +73,8 @@ void http_response_write(http_response *response, const char *data, size_t nbyte
 	}
 }
 
-void http_response_end(http_response *response)
+void
+http_response_end(http_response *response)
 {
 	int fd = response->fd;
 
