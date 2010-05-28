@@ -9,20 +9,23 @@
 #include <services/http.h>
 #include <services/websocks.h>
 
-int smallhttp_start(smallhttpd_t *httpd, int size, struct http_ops *ops)
+int
+smallhttp_start(smallhttpd_t *httpd, int size, struct http_ops *ops)
 {
 	poll_mgmt_start(&httpd->polling, size);
 	http_start(&httpd->services[0], &httpd->polling, ops);
 	return 0;
 }
 
-int smallhttp_open_websocket(smallhttpd_t *httpd, struct ws_ops *ops)
+int
+smallhttp_open_websocket(smallhttpd_t *httpd, struct ws_ops *ops)
 {
 	websocks_start(&httpd->services[1], &httpd->polling, ops);
 	return 0;
 }
 
-int smallhttp_run(smallhttpd_t *httpd)
+int
+smallhttp_run(smallhttpd_t *httpd)
 {
 	int running = 0;
 	while(running == 0) {
@@ -34,7 +37,8 @@ int smallhttp_run(smallhttpd_t *httpd)
 	return running;
 }
 
-void smallhttp_stop(smallhttpd_t *httpd)
+void
+smallhttp_stop(smallhttpd_t *httpd)
 {
 	poll_mgmt_stop(&httpd->polling);
 }

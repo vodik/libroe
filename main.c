@@ -28,7 +28,8 @@ struct ws_ops ws_ops = {
 	//.onmessage = NULL,//test_onmessage,
 };
 
-int main(int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
 	/*poll_mgmt_t mgmt;
 	struct service_t services[2];*/

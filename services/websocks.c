@@ -34,7 +34,8 @@ const char message[] =
 	"WebSocket-Location: ws://localhost:33456/service\r\n"
 	"\r\n";
 
-void ws_on_open(struct fd_context_t *context)
+void
+ws_on_open(struct fd_context_t *context)
 {
 	struct ws_context_t *ws_context = malloc(sizeof(struct ws_context_t));
 	http_parser_init(&ws_context->parser);
@@ -46,7 +47,8 @@ void ws_on_open(struct fd_context_t *context)
 	context->context_gc = free;
 }
 
-int ws_on_message(struct fd_context_t *context, const char *msg, size_t nbytes)
+int
+ws_on_message(struct fd_context_t *context, const char *msg, size_t nbytes)
 {
 	static char buf[1024];
 	event_data_t data;
@@ -93,7 +95,8 @@ int ws_on_message(struct fd_context_t *context, const char *msg, size_t nbytes)
 	return CONN_KEEP_ALIVE;
 }
 
-void ws_on_close(struct fd_context_t *context)
+void
+ws_on_close(struct fd_context_t *context)
 {
 	printf(">>> on close!\n");
 }
@@ -104,7 +107,8 @@ static struct fd_cbs_t ws_callbacks = {
 	.onclose	= ws_on_close,
 };
 
-void websocks_start(struct service_t *ws, poll_mgmt_t *mgmt, struct ws_ops *ops)
+void
+websocks_start(struct service_t *ws, poll_mgmt_t *mgmt, struct ws_ops *ops)
 {
 	ws->type = SERVICE_WEBSOCKS;
 	ws->fd = poll_mgmt_listen(mgmt, ops->port, &ws_callbacks, ops);
@@ -114,12 +118,14 @@ void websocks_start(struct service_t *ws, poll_mgmt_t *mgmt, struct ws_ops *ops)
 
 /******************************************************************************/
 
-void ws_close(ws_t *ws)
+void
+ws_close(ws_t *ws)
 {
 	close(ws->fd);
 }
 
-void ws_send(ws_t *ws, const char *buf, size_t nbytes)
+size_t
+ws_send(ws_t *ws, const char *buf, size_t nbytes)
 {
 	char _buf[nbytes + 2];
 	char *b = _buf;
@@ -130,5 +136,5 @@ void ws_send(ws_t *ws, const char *buf, size_t nbytes)
 		*b++ = *buf++;
 	*b = (char)0xff;
 
-	write(ws->fd, _buf, nbytes + 2);
+	return write(ws->fd, _buf, nbytes + 2);
 }

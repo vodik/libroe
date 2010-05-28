@@ -5,7 +5,8 @@
 #include <time.h>
 #include <string.h>
 
-static inline float frand()
+static inline float
+frand()
 {
 	static int first = 1;
 	if (first) {
@@ -15,7 +16,8 @@ static inline float frand()
 	return (float)rand() / RAND_MAX;
 }
 
-static inline int rand_level(int height)
+static inline int
+rand_level(int height)
 {
 	int level = 0;
 	while (frand() < P && level < height)
@@ -23,7 +25,8 @@ static inline int rand_level(int height)
 	return level;
 }
 
-static struct skipnode_t *skipnode_new(int level, int key, void *val)
+static struct skipnode_t *
+skipnode_new(int level, int key, void *val)
 {
 	struct skipnode_t *node = malloc(sizeof(struct  skipnode_t));
 	node->links = calloc(level + 1, sizeof(struct skipnode_t*));
@@ -32,14 +35,16 @@ static struct skipnode_t *skipnode_new(int level, int key, void *val)
 	return node;
 }
 
-void skipset_init(skipset_t *set, int height)
+void
+skipset_init(skipset_t *set, int height)
 {
 	set->level = 0;
 	set->height = height;
 	set->header = skipnode_new(height, -1, NULL);
 }
 
-void skipset_cleanup(skipset_t *set, cleanup_func clean)
+void
+skipset_cleanup(skipset_t *set, cleanup_func clean)
 {
 	struct skipnode_t *prev, *node = set->header->links[0];
 
@@ -55,7 +60,8 @@ void skipset_cleanup(skipset_t *set, cleanup_func clean)
 	free(set->header);
 }
 
-void skipset_add(skipset_t *set, int key, void *data)
+void
+skipset_add(skipset_t *set, int key, void *data)
 {
 	int i;
 	struct skipnode_t *node = set->header;
@@ -88,7 +94,8 @@ void skipset_add(skipset_t *set, int key, void *data)
 	}
 }
 
-void *skipset_remove(skipset_t *set, int key)
+void *
+skipset_remove(skipset_t *set, int key)
 {
 	int i;
 	struct skipnode_t *node = set->header;
@@ -121,7 +128,8 @@ void *skipset_remove(skipset_t *set, int key)
 	return ret;
 }
 
-int skipset_has(skipset_t *set, int key)
+int
+skipset_has(skipset_t *set, int key)
 {
 	int i;
 	struct skipnode_t *node = set->header;
@@ -136,7 +144,8 @@ int skipset_has(skipset_t *set, int key)
 	return 0;
 }
 
-int skipset_length(skipset_t *set)
+int
+skipset_length(skipset_t *set)
 {
 	return set->length;
 }

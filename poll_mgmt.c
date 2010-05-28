@@ -20,7 +20,8 @@
 * 
 * @param fd The file descriptor of the socket
 */
-static inline void socket_set_nonblock(int fd)
+static inline
+void socket_set_nonblock(int fd)
 {
 	int opts = fcntl(fd, F_GETFL);
 	if (opts < 0)
@@ -36,7 +37,8 @@ static inline void socket_set_nonblock(int fd)
 * @param fd The file descriptor of the socket
 * @param state State to set SO_REUSEADDR to; one activates, zero deactivates.
 */
-static inline void socket_set_reuseaddr(int fd, int state)
+static inline
+void socket_set_reuseaddr(int fd, int state)
 {
 	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &state, sizeof(state)) < 0)
 		die("setsockopt SO_REUSEADDR failed\n");
@@ -47,7 +49,8 @@ static inline void socket_set_reuseaddr(int fd, int state)
 * 
 * @param arg A pointer to fd_event_t, stored in poll_mgmt_t store.
 */
-static void fd_cleanup(void *arg)
+static void
+fd_cleanup(void *arg)
 {
 	struct fd_evt_t *data = arg;
 
@@ -76,7 +79,8 @@ static void fd_cleanup(void *arg)
 * @return A pointer to the store, free to be associated with the epolling event
 * data structure.
 */
-static struct fd_evt_t *poll_mgmt_mkstore(poll_mgmt_t *mngr, int fd, int type, struct fd_cbs_t *cbs, void *shared)
+static struct fd_evt_t *
+poll_mgmt_mkstore(poll_mgmt_t *mngr, int fd, int type, struct fd_cbs_t *cbs, void *shared)
 {
 	struct fd_evt_t *data = malloc(sizeof(struct fd_evt_t));
 	data->fd = fd;
@@ -97,7 +101,8 @@ static struct fd_evt_t *poll_mgmt_mkstore(poll_mgmt_t *mngr, int fd, int type, s
 * @param mngr Self pointer.
 * @param fd The file descriptor of the socket
 */
-static inline void poll_mgmt_removestore(poll_mgmt_t *mngr, int fd)
+static inline void
+poll_mgmt_removestore(poll_mgmt_t *mngr, int fd)
 {
 	struct fd_evt_t *data = skipset_remove(&mngr->store, fd);
 	free(data);
@@ -109,7 +114,8 @@ static inline void poll_mgmt_removestore(poll_mgmt_t *mngr, int fd)
 * @param mngr Self pointer.
 * @param data Auxiliary connection information.
 */
-static void poll_mgmt_accept(poll_mgmt_t *mngr, struct fd_evt_t *data)
+static void
+poll_mgmt_accept(poll_mgmt_t *mngr, struct fd_evt_t *data)
 {
 	struct epoll_event evt;
 	int fd;
@@ -142,7 +148,8 @@ static void poll_mgmt_accept(poll_mgmt_t *mngr, struct fd_evt_t *data)
 * @param mngr Self pointer.
 * @param data Auxiliary connection information.
 */
-static void poll_mgmt_handle(poll_mgmt_t *mngr, struct fd_evt_t *data)
+static void
+poll_mgmt_handle(poll_mgmt_t *mngr, struct fd_evt_t *data)
 {
 	static char buf[POLL_MGMT_BUFF_SIZE];
 	int keepalive = 0;
@@ -180,7 +187,8 @@ static void poll_mgmt_handle(poll_mgmt_t *mngr, struct fd_evt_t *data)
 * to the number of concurrent connections but sets how many events can be read by one
 * call to epoll_wait. See man epoll_create.
 */
-void poll_mgmt_start(poll_mgmt_t *mngr, int size)
+void
+poll_mgmt_start(poll_mgmt_t *mngr, int size)
 {
 	mngr->fd = epoll_create(size);
 	mngr->size = size;
@@ -193,7 +201,8 @@ void poll_mgmt_start(poll_mgmt_t *mngr, int size)
 * 
 * @param mngr Self pointer.
 */
-void poll_mgmt_stop(poll_mgmt_t *mngr)
+void
+poll_mgmt_stop(poll_mgmt_t *mngr)
 {
 	skipset_cleanup(&mngr->store, fd_cleanup);
 	free(mngr->events);
@@ -210,7 +219,8 @@ void poll_mgmt_stop(poll_mgmt_t *mngr)
 * 
 * @return The file descriptor of the listening socket.
 */
-int poll_mgmt_listen(poll_mgmt_t *mngr, int port, struct fd_cbs_t *cbs, void *shared)
+int
+poll_mgmt_listen(poll_mgmt_t *mngr, int port, struct fd_cbs_t *cbs, void *shared)
 {
 	struct sockaddr_in addr;
 	struct epoll_event evt;
@@ -247,14 +257,17 @@ int poll_mgmt_listen(poll_mgmt_t *mngr, int port, struct fd_cbs_t *cbs, void *sh
 * @param mngr Self pointer.
 * @param fd The file descriptor of the listening port. Not final.
 */
-void poll_mgmt_close(poll_mgmt_t *mngr, int fd)
+void
+poll_mgmt_close(poll_mgmt_t *mngr, int fd)
 {
 	die("poll_mgmt_close has not been implemented");
 }
 
 /* FIXME */
 int done = 0;
-static void handler(int sig) { done = 1; }
+
+static void
+handler(int sig) { done = 1; }
 
 /** 
 * @brief Poll incoming connections or data and handle them appropriately.
@@ -264,7 +277,8 @@ static void handler(int sig) { done = 1; }
 * 
 * @return Return code. 0 if OK, > 1 if error.
 */
-int poll_mgmt_poll(poll_mgmt_t *mngr, int timeout)
+int
+poll_mgmt_poll(poll_mgmt_t *mngr, int timeout)
 {
 	struct fd_evt_t *data;
 	struct sigaction sa;
