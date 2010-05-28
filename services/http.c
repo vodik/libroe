@@ -159,27 +159,25 @@ int http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes
 	 * switch is here in case the entire header doesn't come in one message and
 	 * thus have to resume parsing */
 	/* TODO: check if message is incomplete */
-	/* TODO: macroify */
+#define READ_EVENT(EVT)                                                     \
+	case HTTP_DATA_##EVT:                                                   \
+		read = http_parser_next_event(parser, buf, LENGTH(buf), &data);     \
+		buf[read] = '\0';                                                   \
+		assert(data.type == HTTP_DATA_##EVT);                               \
+		http_context->expected_event = HTTP_DATA_##EVT + 1;
+
 	switch (http_context->expected_event) {
-		case HTTP_DATA_METHOD:
-			read = http_parser_next_event(parser, buf, 1024, &data);
-			buf[read] = '\0';
-			assert(data.type == HTTP_DATA_METHOD);
-			http_context->expected_event = HTTP_DATA_PATH;
-			conn->request.method = http_method_id(buf, read);
-		case HTTP_DATA_PATH:
-			read = http_parser_next_event(parser, buf, 1024, &data);
-			assert(data.type == HTTP_DATA_PATH);
-			http_context->expected_event = HTTP_DATA_VERSION;
-			conn->request.path = strndup(buf, read);
-		/*case HTTP_DATA_QUERY:
-		case HTTP_DATA_FRAGMENT:*/
-		case HTTP_DATA_VERSION:
-			read = http_parser_next_event(parser, buf, 1024, &data);
-			assert(data.type == HTTP_DATA_VERSION);
-			http_context->expected_event = HTTP_DATA_HEADER;
-			conn->request.version = strndup(buf, read);
+		READ_EVENT(METHOD);
+		conn->request.method = http_method_id(buf, read);
+
+		READ_EVENT(PATH);
+		conn->request.path = strndup(buf, read);
+
+		READ_EVENT(VERSION);
+		conn->request.version = strndup(buf, read);
 	}
+
+#undef READ_EVENT
 
 	if (!http_context->made_request) {
 		ops->onrequest(conn);
