@@ -23,7 +23,7 @@ struct ws_context_t {
 	int auth;
 	int expected_event; /* FIXME: this should be in the parser itself, this is a kudge */
 	sbuf_t *method, *version;
-	sbuf_t *field, header;
+	sbuf_t *field, *header;
 
 	sbuf_t *response;
 };
@@ -99,8 +99,23 @@ ws_on_message(struct fd_context_t *context, const char *msg, size_t nbytes)
 				sbuf_ncat(ws_context->version, buf, read);
 
 			case HTTP_DATA_HEADER:
-				iface->onrequest(ws);
-				ws_context->auth = 1;
+				read = http_parser_next_event(parser, buf, 1024, &data);
+				assert(data.type == HTTP_DATA_HEADER);
+				ws_context->expected_event = HTTP_DATA_FIELD;
+
+				sbuf_ncat(ws_context->header, buf, read);
+
+			case HTTP_DATA_FIELD:
+				read = http_parser_next_event(parser, buf, 1024, &data);
+				assert(data.type == HTTP_DATA_FIELD);
+				ws_context->expected_event = HTTP_DATA_HEADER;
+
+				sbuf_ncat(ws_context->field, buf, read);
+
+				/* TODO: handle header/value pairs */
+
+				sbuf_clear(ws_context->header);
+				sbuf_clear(ws_context->field);
 		}
 	} else if (ws->onmessage)
 		/* We got an incomming message and a function to handle it */
