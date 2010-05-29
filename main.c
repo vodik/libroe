@@ -25,7 +25,7 @@ struct http_iface test_iface = {
 
 struct ws_iface ws_iface = {
 	.port = 33456,
-	//.onmessage = NULL,//test_onmessage,
+	.onopen = NULL,
 };
 
 int

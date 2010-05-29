@@ -15,11 +15,12 @@ typedef struct _ws {
 	int status;
 
 	void (*onmessage)(struct _ws *ws, const char *msg, size_t nbytes);
+	void (*onclose)(struct _ws *ws);
 } ws_t;
 
 struct ws_iface {
 	int port;
-	void (*onrequest)(ws_t *ws);
+	void (*onopen)(ws_t *ws);
 };
 
 void websocks_start(struct service_t *ws, poll_mgmt_t *mgmt, struct ws_iface *iface);

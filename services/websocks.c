@@ -11,6 +11,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <assert.h>
+#include <util/sbuf.h>
 
 #include <request/parser.h>
 
@@ -43,11 +44,43 @@ ws_on_open(struct fd_context_t *context)
 
 	ws_context->ws.fd = context->fd;
 
-	ws_context->response = sbuf_new(LENGTH(message));
-	sbuf_cat(ws_context->response, message);
-
 	context->data = ws_context;
 	context->context_gc = free; /* FIXME: no long adequate */
+}
+
+void
+ws_handle_headers(const char *header, const char *field)
+{
+	if (strcmp(header, "Host") == 0) {
+		/* TODO */
+	} else if (strcmp(header, "Connection") == 0) {
+		/* TODO */
+	} else if (strcmp(header, "Upgrade") == 0) {
+		/* TODO */
+	} else if (strcmp(header, "Origin") == 0) {
+		/* TODO */
+	} else if (strcmp(header, "Sec-WebSocket-Key1") == 0) {
+		/* TODO */
+	} else if (strcmp(header, "Sec-WebSocket-Key2") == 0) {
+		/* TODO */
+	} else if (strcmp(header, "Sec-WebSocket-Protocol") == 0) {
+		/* TODO */
+	}
+}
+
+int
+ws_acknowledge(ws_t *ws)
+{
+	sbuf_t *response = sbuf_new(LENGTH(message));
+	int ret;
+
+	sbuf_cat(response, message);
+
+	/* send reponse */
+	ret = write(ws->fd, _S(response), sbuf_len(response));
+	if (ret < 0)
+		die("websocket acknowledge failed\n");
+	return 0;
 }
 
 int
@@ -63,7 +96,7 @@ ws_on_message(struct fd_context_t *context, const char *msg, size_t nbytes)
 
 	struct ws_iface *iface = context->shared;
 
-	if (!iface->onrequest)
+	if (!iface->onopen)
 		return CONN_CLOSE;
 
 	http_parser_set_buffer(parser, msg, nbytes);
@@ -113,9 +146,14 @@ ws_on_message(struct fd_context_t *context, const char *msg, size_t nbytes)
 				sbuf_ncat(ws_context->field, buf, read);
 
 				/* TODO: handle header/value pairs */
+				ws_handle_headers(_S(ws_context->header), _S(ws_context->field));
 
 				sbuf_clear(ws_context->header);
 				sbuf_clear(ws_context->field);
+
+			case HTTP_EVT_HEADER_DONE:
+				/* fir off header now */
+				ws_acknowledge(ws);
 		}
 	} else if (ws->onmessage)
 		/* We got an incomming message and a function to handle it */

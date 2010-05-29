@@ -27,15 +27,16 @@ enum http_methods {
 	LAST_HTTP_METHOD,
 };
 
-enum http_parser_data {
+enum http_parser_evt {
 	HTTP_DATA_METHOD,
 	HTTP_DATA_PATH,
-	/*HTTP_DATA_QUERY,
-	HTTP_DATA_URL,
-	HTTP_DATA_FRAGMENT,*/
 	HTTP_DATA_VERSION,
 	HTTP_DATA_HEADER,
 	HTTP_DATA_FIELD,
+
+	HTTP_EVT_HEADER_DONE,
+	HTTP_EVT_BODY_DONE,
+	HTTP_EVT_ERROR
 };
 
 typedef struct {
