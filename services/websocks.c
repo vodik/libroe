@@ -41,11 +41,10 @@ ws_on_open(struct fd_context_t *context)
 	struct ws_context_t *ws_context = malloc(sizeof(struct ws_context_t));
 	http_parser_init(&ws_context->parser);
 
-	ws_context->auth = 0;
 	ws_context->ws.fd = context->fd;
 
 	ws_context->response = sbuf_new(LENGTH(message));
-	sbuf_cat(ws-context->response, message);
+	sbuf_cat(ws_context->response, message);
 
 	context->data = ws_context;
 	context->context_gc = free; /* FIXME: no long adequate */
@@ -79,7 +78,7 @@ ws_on_message(struct fd_context_t *context, const char *msg, size_t nbytes)
 
 				sbuf_ncat(ws_context->method, buf, read);
 
-				if (sbuf_cmp(ws->method, "GET") != 0) {
+				if (sbuf_cmp(ws_context->method, "GET") != 0) {
 					fprintf(stderr, "--- WEBSOCKET CAN ONLY GET\n");
 					return CONN_CLOSE;
 				}
@@ -105,8 +104,7 @@ ws_on_message(struct fd_context_t *context, const char *msg, size_t nbytes)
 		}
 	} else if (ws->onmessage)
 		/* We got an incomming message and a function to handle it */
-		ws->onmessage(msg, nbytes);
-	}
+		ws->onmessage(ws, msg, nbytes);
 
 	/* Websocket is to be kept alive until its EXPLICITLY closed */
 	return CONN_KEEP_ALIVE;

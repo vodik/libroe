@@ -9,12 +9,12 @@ enum {
 	WS_STATUS_CLOSED,
 };
 
-typedef struct {
+typedef struct _ws {
 	int fd;
 	sbuf_t *path;
 	int status;
 
-	void (*onmessage)(ws_t *ws, const char *msg, size_t nbytes);
+	void (*onmessage)(struct _ws *ws, const char *msg, size_t nbytes);
 } ws_t;
 
 struct ws_iface {
