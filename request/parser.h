@@ -41,14 +41,18 @@ enum http_parser_evt {
 
 typedef struct {
 	int type;
+	int complete;
 } event_data_t;
 
 struct state_t;
-typedef int state_fn(struct state_t *state, char *buf, size_t nbytes, event_data_t *data);
+typedef int state_fn(struct state_t *state, char *buf, size_t nbytes);
 
 struct state_t {
 	const char *buf;
 	size_t len;
+	size_t read;
+
+	int state;
 	state_fn *next;
 };
 
@@ -59,5 +63,7 @@ typedef struct http_parser {
 void http_parser_init(http_parser *);
 void http_parser_set_buffer(http_parser *, const char *buf, size_t nbytes);
 int http_parser_next_event(http_parser *parser, char *buf, size_t nbytes, event_data_t *evt);
+
+int http_parser_error(http_parser *parser);
 
 #endif

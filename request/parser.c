@@ -7,90 +7,114 @@
 
 state_fn state_method, state_path, state_version, state_header, state_field;
 
-int
-state_method(struct state_t *state, char *buf, size_t nbytes, event_data_t *evt)
-{
-	int read = 0;
-
-	printf("&&& method\n");
-	while (state->len-- > 0 && (*buf = *state->buf++) != ' ' && read++ < nbytes)
-		++buf;
-
-	evt->type = HTTP_DATA_METHOD;
-	state->next = state_path;
-
-	return read;
-}
+enum {
+	STATE_CONTINUE,
+	STATE_ACCEPT,
+	STATE_FAIL,
+};
 
 int
-state_path(struct state_t *state, char *buf, size_t nbytes, event_data_t *evt)
+state_method(struct state_t *state, char *buf, size_t nbytes)
 {
-	int read = 0;
+	char c;
 
-	while (state->len-- > 0 && (*buf = *state->buf++) != ' ' && read++ < nbytes)
-		++buf;
-
-	evt->type = HTTP_DATA_PATH;
-	state->next = state_version;
-
-	return read;
-}
-
-int
-state_version(struct state_t *state, char *buf, size_t nbytes, event_data_t *evt)
-{
-	int read = 0;
-
-	while (state->len-- > 0 && (*buf = *state->buf++) != '\r' && read++ < nbytes)
-		++buf;
-	++state->buf;
-	--state->len;
-
-	evt->type = HTTP_DATA_VERSION;
-	state->next = state_header;
-
-	return read;
-}
-
-int
-state_header(struct state_t *state, char *buf, size_t nbytes, event_data_t *evt)
-{
-	int read = 0;
-
-	assert(state->len < 2000);
-	if (state->len == 2) {
-		state->len = 0;
-		state->next = NULL;
-		return 0;
+	while (state->len-- > 0 && state->read++ < nbytes) {
+		c = *state->buf++;
+		if (c == ' ') {
+			return STATE_ACCEPT;
+		} else if (c >= 'A' && c <= 'Z') {
+			*buf++ = c;
+		} else {
+			return STATE_FAIL;
+		}
 	}
-
-	while (state->len-- > 0 && (*buf = *state->buf++) != ':' && read++ < nbytes)
-		++buf;
-	++state->buf;
-	--state->len;
-
-	evt->type = HTTP_DATA_HEADER;
-	state->next = state_field;
-
-	return read;
+	return STATE_CONTINUE;
 }
 
 int
-state_field(struct state_t *state, char *buf, size_t nbytes, event_data_t *evt)
+state_path(struct state_t *state, char *buf, size_t nbytes)
 {
-	int read = 0;
+	char c;
 
-	assert(state->len < 2000);
+	while (state->len-- > 0 && state->read++ < nbytes) {
+		c = *state->buf++;
+		switch (c) {
+			case ' ':
+				return STATE_ACCEPT;
+			default:
+				*buf++ = c;
+				break;
+		}
+	}
+	return STATE_CONTINUE;
+}
 
-	while (state->len-- > 0 && (*buf = *state->buf++) != '\r' && read++ < nbytes)
-		++buf;
-	++state->buf;
-	--state->len;
+int
+state_version(struct state_t *state, char *buf, size_t nbytes)
+{
+	int term = 0;
+	char c;
 
-	evt->type = HTTP_DATA_FIELD;
-	state->next = state_header;
+	while (state->len-- > 0 && state->read++ < nbytes) {
+		c = *state->buf++;
+		switch (c) {
+			case '\r':
+				term = 1;
+				break;
+			case '\n':
+				if (term)
+					return STATE_ACCEPT;
+			default:
+				*buf++ = c;
+				term = 0;
+				break;
+		}
+	}
+	return STATE_CONTINUE;
+}
 
-	return read;
+int
+state_header(struct state_t *state, char *buf, size_t nbytes)
+{
+	char c;
+
+	/* DON'T CHECK IF PARSING IS DONE HERE, THATS NOT APPROPRIATE */
+
+	while (state->len-- > 0 && state->read++ < nbytes) {
+		c = *state->buf++;
+		switch (c) {
+			case ':':
+				return STATE_ACCEPT;
+			default:
+				*buf++ = c;
+				break;
+		}
+	}
+	return STATE_CONTINUE;
+}
+
+int
+state_field(struct state_t *state, char *buf, size_t nbytes)
+{
+	int term = 0;
+	char c;
+
+	while (state->len-- > 0 && state->read++ < nbytes) {
+		c = *state->buf++;
+		switch (c) {
+			case '\r':
+				term = 1;
+				break;
+			case '\n':
+				if (term)
+					return STATE_ACCEPT;
+			default:
+				*buf++ = c;
+				term = 0;
+				break;
+		}
+	}
+	return STATE_CONTINUE;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -98,8 +122,10 @@ state_field(struct state_t *state, char *buf, size_t nbytes, event_data_t *evt)
 void
 http_parser_init(http_parser *parser)
 {
+	parser->state.state = HTTP_DATA_METHOD;
 	parser->state.next = state_method;
 	parser->state.len = 0;
+	parser->state.read = 0;
 }
 
 void
@@ -114,8 +140,18 @@ http_parser_next_event(http_parser *parser, char *buf, size_t nbytes, event_data
 {
 	int event = -1;
 
-	if (parser->state.len > 0 && parser->state.next)
-		event = parser->state.next(&parser->state, buf, nbytes, evt);
+	if (parser->state.len > 0 && parser->state.next) {
+		switch (parser->state.next(&parser->state, buf, nbytes)) {
+			case STATE_ACCEPT:
+				break;
+			case STATE_FAIL:
+				break;
+			case STATE_CONTINUE:
+				break;
+			default:
+				break;
+		}
+	}
 
 	return event;
 }
