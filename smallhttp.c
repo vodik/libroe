@@ -10,17 +10,17 @@
 #include <services/websocks.h>
 
 int
-smallhttp_start(smallhttpd_t *httpd, int size, struct http_ops *ops)
+smallhttp_start(smallhttpd_t *httpd, int size, struct http_iface *iface)
 {
 	poll_mgmt_start(&httpd->polling, size);
-	http_start(&httpd->services[0], &httpd->polling, ops);
+	http_start(&httpd->services[0], &httpd->polling, iface);
 	return 0;
 }
 
 int
-smallhttp_open_websocket(smallhttpd_t *httpd, struct ws_ops *ops)
+smallhttp_open_websocket(smallhttpd_t *httpd, struct ws_iface *iface)
 {
-	websocks_start(&httpd->services[1], &httpd->polling, ops);
+	websocks_start(&httpd->services[1], &httpd->polling, iface);
 	return 0;
 }
 

@@ -18,12 +18,12 @@
 
 #include <response/response.h>
 
-struct http_ops test_ops = {
+struct http_iface test_iface = {
 	.port = 11234,
 	.onrequest = test_onrequest,
 };
 
-struct ws_ops ws_ops = {
+struct ws_iface ws_iface = {
 	.port = 33456,
 	//.onmessage = NULL,//test_onmessage,
 };
@@ -41,16 +41,16 @@ main(int argc, char *argv[])
 	{
 		switch (c) {
 			case 'p':
-				test_ops.port = atoi(optarg);
+				test_iface.port = atoi(optarg);
 				break;
 			case 'w':
-				ws_ops.port = atoi(optarg);
+				ws_iface.port = atoi(optarg);
 				break;
 		}
 	}
 
-	smallhttp_start(&httpd, POLL_EVENTS, &test_ops);
-	smallhttp_open_websocket(&httpd, &ws_ops);
+	smallhttp_start(&httpd, POLL_EVENTS, &test_iface);
+	smallhttp_open_websocket(&httpd, &ws_iface);
 
 	smallhttp_run(&httpd);
 	smallhttp_stop(&httpd);

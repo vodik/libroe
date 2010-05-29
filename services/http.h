@@ -21,11 +21,11 @@ typedef struct http_conn {
 	void (*makeresponse)(struct http_conn *conn);
 } http_conn;
 
-struct http_ops {
+struct http_iface {
 	int port;
 	void (*onrequest)(http_conn *conn);
 };
 
-void http_start(struct service_t *http, poll_mgmt_t *mgmt, struct http_ops *events);
+void http_start(struct service_t *http, poll_mgmt_t *mgmt, struct http_iface *events);
 
 #endif

@@ -21,18 +21,19 @@ struct ws_context_t {
 	ws_t ws;
 
 	int auth;
-	int expected_event;
-	char *path;
-	char *header;
+	int expected_event; /* FIXME: this should be in the parser itself, this is a kudge */
+	sbuf_t *method, *version;
+	sbuf_t *field, header;
+
+	sbuf_t *response;
 };
 
 const char message[] =
 	"HTTP/1.1 101 Web Socket Protocol Handshake\r\n"
 	"Upgrade: WebSocket\r\n"
-	"Connection: Upgrade\r\n"
-	"WebSocket-Origin: http://localhost:11234\r\n"
-	"WebSocket-Location: ws://localhost:33456/service\r\n"
-	"\r\n";
+	"Connection: Upgrade\r\n";
+	/*"WebSocket-Origin: http://localhost:11234\r\n"
+	"WebSocket-Location: ws://localhost:33456/service\r\n"*/
 
 void
 ws_on_open(struct fd_context_t *context)
@@ -43,8 +44,11 @@ ws_on_open(struct fd_context_t *context)
 	ws_context->auth = 0;
 	ws_context->ws.fd = context->fd;
 
+	ws_context->response = sbuf_new(LENGTH(message));
+	sbuf_cat(ws-context->response, message);
+
 	context->data = ws_context;
-	context->context_gc = free;
+	context->context_gc = free; /* FIXME: no long adequate */
 }
 
 int
@@ -58,9 +62,9 @@ ws_on_message(struct fd_context_t *context, const char *msg, size_t nbytes)
 	http_parser *parser = &ws_context->parser;
 	ws_t *ws = &ws_context->ws;
 
-	struct ws_ops *ops = context->shared;
+	struct ws_iface *iface = context->shared;
 
-	if (!ops->onrequest)
+	if (!iface->onrequest)
 		return CONN_CLOSE;
 
 	http_parser_set_buffer(parser, msg, nbytes);
@@ -72,26 +76,39 @@ ws_on_message(struct fd_context_t *context, const char *msg, size_t nbytes)
 				buf[read] = '\0';
 				assert(data.type == HTTP_DATA_METHOD);
 				ws_context->expected_event = HTTP_DATA_PATH;
-				if (strncmp(buf, "GET", read) != 0) {
+
+				sbuf_ncat(ws_context->method, buf, read);
+
+				if (sbuf_cmp(ws->method, "GET") != 0) {
 					fprintf(stderr, "--- WEBSOCKET CAN ONLY GET\n");
 					return CONN_CLOSE;
 				}
+
 			case HTTP_DATA_PATH:
 				read = http_parser_next_event(parser, buf, 1024, &data);
 				assert(data.type == HTTP_DATA_PATH);
 				ws_context->expected_event = HTTP_DATA_VERSION;
-				ws->path = strndup(buf, read);
+
+				sbuf_ncat(ws->path, buf, read);
+
 			case HTTP_DATA_VERSION:
 				read = http_parser_next_event(parser, buf, 1024, &data);
 				assert(data.type == HTTP_DATA_VERSION);
 				ws_context->expected_event = HTTP_DATA_HEADER;
+
 				/* use version info? */
+				sbuf_ncat(ws_context->version, buf, read);
+
 			case HTTP_DATA_HEADER:
-				ops->onrequest(ws);
+				iface->onrequest(ws);
 				ws_context->auth = 1;
 		}
+	} else if (ws->onmessage)
+		/* We got an incomming message and a function to handle it */
+		ws->onmessage(msg, nbytes);
 	}
 
+	/* Websocket is to be kept alive until its EXPLICITLY closed */
 	return CONN_KEEP_ALIVE;
 }
 
@@ -108,10 +125,10 @@ static struct fd_cbs_t ws_callbacks = {
 };
 
 void
-websocks_start(struct service_t *ws, poll_mgmt_t *mgmt, struct ws_ops *ops)
+websocks_start(struct service_t *ws, poll_mgmt_t *mgmt, struct ws_iface *iface)
 {
 	ws->type = SERVICE_WEBSOCKS;
-	ws->fd = poll_mgmt_listen(mgmt, ops->port, &ws_callbacks, ops);
+	ws->fd = poll_mgmt_listen(mgmt, iface->port, &ws_callbacks, iface);
 	ws->mgmt = mgmt;
 	//ws->events = events;
 }

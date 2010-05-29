@@ -150,10 +150,10 @@ http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes)
 	http_parser *parser = &http_context->parser;
 	http_conn *conn = &http_context->conn;
 
-	struct http_ops *ops = context->shared;
+	struct http_iface *iface = context->shared;
 
 	/* TODO: macroify keep-alive */
-	if (!ops->onrequest)
+	if (!iface->onrequest)
 		return CONN_CLOSE;
 
 	http_parser_set_buffer(parser, msg, nbytes);
@@ -187,7 +187,7 @@ http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes)
 #undef READ_EVENT
 
 	if (!http_context->made_request) {
-		ops->onrequest(conn);
+		iface->onrequest(conn);
 
 		if (!conn->makeresponse)
 			return CONN_CLOSE;
@@ -295,10 +295,10 @@ static struct fd_cbs_t http_callbacks = {
 * @param events HTTP event callbacks to receive GET, POST, etc. messages
 */
 void
-http_start(struct service_t *http, poll_mgmt_t *mgmt, struct http_ops *ops)
+http_start(struct service_t *http, poll_mgmt_t *mgmt, struct http_iface *iface)
 {
 	http->type = SERVICE_HTTP;
-	http->fd = poll_mgmt_listen(mgmt, ops->port, &http_callbacks, ops);//, &http_callbacks, http);
+	http->fd = poll_mgmt_listen(mgmt, iface->port, &http_callbacks, iface);//, &http_callbacks, http);
 	http->mgmt = mgmt;
 	//http->cb = cb;
 }
