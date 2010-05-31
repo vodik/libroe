@@ -1,9 +1,41 @@
-#include "parser.h"
+#include <parser.h>
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+
+#include <sbuf.h>
+
+struct _temp {
+	int fd;
+	struct timeval tv;
+};
+
+int
+pull_fd(void *dat, void *buf, size_t nbytes)
+{
+	struct _temp temp = dat;
+
+	fd_set fds;
+	struct timeval tv;
+	int n;
+
+	FD_ZERO(&fds);
+	FD_SET(dat->fd, &fds);
+
+	n = select(fd + 1, &fds, NULL, NULL, &dat->tv);
+	if (n > 0) {
+		if (FD_ISSET(fd, &fds)) {
+			n = read(fd, buf, nbytes);
+			return n;
+		}
+	}
+	printf("--- timeout\n");
+	return BUF_ERR;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 state_fn state_method, state_path, state_version, state_header, state_field;
 
@@ -117,22 +149,23 @@ state_field(struct state_t *state, char *buf, size_t nbytes)
 	return STATE_CONTINUE;
 }
 
+size_t
+http_parser_read(http_parser *parser)
+{
+	size_t r = read(parser->state.buf, parser->state.len);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 void
-http_parser_init(http_parser *parser)
+http_parser_init(http_parser *parser, int fd)
 {
 	parser->state.state = HTTP_DATA_METHOD;
 	parser->state.next = state_method;
 	parser->state.len = 0;
 	parser->state.read = 0;
-}
 
-void
-http_parser_set_buffer(http_parser *parser, const char *buf, size_t nbytes)
-{
-	parser->state.buf = buf;
-	parser->state.len = nbytes;
+	parser->fd = fd;
 }
 
 int
