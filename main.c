@@ -10,13 +10,13 @@
 #include <errno.h>
 
 #include <util.h>
-#include <util/urlencode.h>
+#include <urlencode.h>
 #include <smallhttp.h>
 #include "config.h"
 
 #include "test_http.h"
 
-#include <response/response.h>
+#include <response.h>
 
 struct http_iface test_iface = {
 	.port = 11234,

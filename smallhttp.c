@@ -6,8 +6,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#include <services/http.h>
-#include <services/websocks.h>
+#include <http.h>
+#include <websocks.h>
 
 int
 smallhttp_start(smallhttpd_t *httpd, int size, struct http_iface *iface)

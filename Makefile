@@ -1,13 +1,27 @@
 CC = gcc
-CFLAGS = -Wall -pedantic --std=gnu99 -I. -O0 -g -D_GNU_SOURCE
+CFLAGS = -Wall -pedantic --std=gnu99 -I./include -O0 -g -D_GNU_SOURCE
 LDFLAGS =
 
-SRC = main.c smallhttp.c test_http.c poll_mgmt.c services/http.c services/websocks.c request/parser.c response/response.c util/skipset.c util/hashtable.c util/urlencode.c util.c
+SRC = deflate.c      \
+      hashtable.c    \
+      http.c         \
+      main.c         \
+      parser.c       \
+      poll_mgmt.c    \
+      response.c     \
+      skipset.c      \
+      smallhttp.c    \
+      test_http.c    \
+      uri.c          \
+      urlencode.c    \
+      util.c         \
+      websocks.c
+      #sbuf.c         
 OBJ = ${SRC:.c=.o}
 
 all: test
 
-.c.o:
+%.o: %.c
 	@echo CC $@
 	@${CC} -o $@ -c ${CFLAGS} $<
 

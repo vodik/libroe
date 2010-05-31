@@ -69,7 +69,7 @@ test_onrequest(http_conn *conn)
 void
 ws_onrequest(ws_t *ws)
 {
-	if (strcmp(ws->path, "/echo") == 0) {
+	if (sbuf_cmp(ws->path, "/echo") == 0) {
 		/* TODO */
 	} else
 		ws_close(ws);
