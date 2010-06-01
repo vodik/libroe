@@ -6,7 +6,6 @@ SRC = deflate.c      \
 	  conn.c         \
 	  hashtable.c    \
 	  http.c         \
-	  main.c         \
 	  parser.c       \
 	  poll_mgmt.c    \
 	  response.c     \

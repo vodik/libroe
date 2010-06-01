@@ -99,24 +99,23 @@ sbuf_move(sbuf_t *src, sbuf_t *dest)
 }
 
 void
-sbuf_copy(sbuf_t *src, sbuf_t *dest)
+sbuf_cat(sbuf_t *sb, const char *str)
 {
-	/*free(dest->buf);
-	dest->buf = src->buf;
-	dest->NUL = src->NUL;
-	dest->buflen = src->buflen;
-	sbuf_init(src);*/
+	size_t len = strlen(str);
+
+	sbuf_extendby(sb, len + 1);
+	memcpy(&sb->buf[sb->NUL], str, len);
+	sb->NUL += len;
+	sb->buf[sb->NUL] = '\0';
 }
 
-/*void
-sbuf_truncate(sbuf_t *sb, int len)
+void
+sbuf_putc(sbuf_t *sb, const char c)
 {
-	if (len < 0 || len > sb->NUL)
-		return;
-	sb->NUL = len;
-	if (sb->buf)
-		sb->buf[sb->NUL] = '\0';
-}*/
+	sbuf_extendby(sb, 1);
+	sb->buf[sb->NUL++] = c;
+	sb->buf[sb->NUL] = '\0';
+}
 
 void
 sbuf_ncat(sbuf_t *sb, const char *str, size_t len)
@@ -125,15 +124,6 @@ sbuf_ncat(sbuf_t *sb, const char *str, size_t len)
 	memcpy(&sb->buf[sb->NUL], str, len);
 	sb->NUL += len;
 	sb->buf[sb->NUL] = '\0';
-}
-
-void
-sbuf_catb(sbuf_t *sb, sbuf_t *str)
-{
-	/*sbuf_extendby(sb, len + 1);
-	memcpy(&sb->buf[sb->NUL], str, len);
-	sb->NUL += len;
-	sb->buf[sb->NUL] = '\0';*/
 }
 
 void
