@@ -22,11 +22,12 @@ typedef void (*onopen_cb)(struct fd_context_t *context);
 typedef int (*onmessage_cb)(struct fd_context_t *context, const char *msg, size_t nbytes);
 typedef void (*onclose_cb)(struct fd_context_t *context);
 
-struct fd_cbs_t {
+//struct fd_cbs_t {
+typedef struct {
 	onopen_cb onopen;
 	onmessage_cb onmessage;
 	onclose_cb onclose;
-};
+} fd_cbs_t;
 
 struct fd_evt_t {
 	int fd;

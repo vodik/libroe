@@ -5,6 +5,23 @@
 #include <response.h>
 #include <parser.h>
 
+/* TODO move to a private header */
+void http_on_open(struct fd_context_t *context);
+int http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes);
+void http_on_close(struct fd_context_t *context);
+
+static const fd_cbs_t http_callbacks = {
+	.onopen		= http_on_open,
+	.onmessage	= http_on_message,
+	.onclose	= http_on_close,
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+typedef struct {
+	conn_t *base;
+} http_t;
+
 typedef struct {
 	int method;
 	char *path;//, *query, *frag;
@@ -25,7 +42,5 @@ struct http_iface {
 	int port;
 	void (*onrequest)(http_conn *conn);
 };
-
-void http_start(struct service_t *http, poll_mgmt_t *mgmt, struct http_iface *events);
 
 #endif

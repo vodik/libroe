@@ -275,30 +275,3 @@ void
 http_on_close(struct fd_context_t *context)
 {
 }
-
-/** 
-* @brief The callbacks specific to handling HTTP https.
-*/
-static struct fd_cbs_t http_callbacks = {
-	.onopen		= http_on_open,
-	.onmessage	= http_on_message,
-	.onclose	= http_on_close,
-};
-
-/** 
-* @brief Start the HTTP service. This sets the provided polling manager to
-* start listening for HTTP https and handle them.
-* 
-* @param http The service data structure.
-* @param mgmt A pointer to the polling manager to manage the connections.
-* @param port The port to listen on.
-* @param events HTTP event callbacks to receive GET, POST, etc. messages
-*/
-void
-http_start(struct service_t *http, poll_mgmt_t *mgmt, struct http_iface *iface)
-{
-	http->type = SERVICE_HTTP;
-	http->fd = poll_mgmt_listen(mgmt, iface->port, &http_callbacks, iface);//, &http_callbacks, http);
-	http->mgmt = mgmt;
-	//http->cb = cb;
-}
