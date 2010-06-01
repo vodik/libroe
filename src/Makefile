@@ -3,6 +3,7 @@ CFLAGS = -Wall -pedantic --std=gnu99 -I../include -O0 -g -D_GNU_SOURCE
 LDFLAGS =
 
 SRC = deflate.c      \
+	  conn.c         \
 	  hashtable.c    \
 	  http.c         \
 	  main.c         \
