@@ -4,11 +4,11 @@
 #include <poll_mgmt.h>
 #include <services.h>
 #include <http.h>
-#include <websocks.h>
+#include <websocket.h>
 
 typedef struct {
 	poll_mgmt_t polling;
-	struct service_t services[2]; /* TODO: linked list so allow dynamic growth */
+	service_t services[2]; /* TODO: linked list so allow dynamic growth */
 } smallhttpd_t;
 
 int smallhttp_start(smallhttpd_t *httpd, int size, struct http_iface *iface);

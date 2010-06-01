@@ -2,7 +2,7 @@
 #define SMALLHTTP_TEST_HTTP
 
 #include <http.h>
-#include <websocks.h>
+#include <websocket.h>
 
 void test_onrequest(http_conn *conn);
 void ws_onrequest(ws_t *ws);

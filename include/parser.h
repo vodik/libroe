@@ -2,6 +2,7 @@
 #define SMALLHTTP_REQUEST_PARSER
 
 #include <stddef.h>
+#include <conn.h>
 
 enum http_methods {
 	HTTP_METHOD_DELETE,
@@ -39,11 +40,6 @@ enum http_parser_evt {
 	HTTP_EVT_ERROR
 };
 
-typedef struct {
-	int type;
-	int complete;
-} event_data_t;
-
 struct state_t;
 typedef int state_fn(struct state_t *state, char *buf, size_t nbytes);
 
@@ -60,10 +56,8 @@ typedef struct http_parser {
 	struct state_t state;
 } http_parser;
 
-void http_parser_init(http_parser *parser, int fd);
-void http_parser_set_buffer(http_parser *, const char *buf, size_t nbytes);
-int http_parser_next_event(http_parser *parser, char *buf, size_t nbytes, event_data_t *evt);
-
-int http_parser_error(http_parser *parser);
+void http_parser_init(http_parser *parser, conn_t *conn);
+void http_parser_cleanup(http_parser *parser);
+int http_parser_next(http_parser *parser, const char **buf, size_t *len);
 
 #endif

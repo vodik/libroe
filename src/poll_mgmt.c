@@ -15,6 +15,8 @@
 #include "util.h"
 #include "config.h"
 
+/* FIXME: tie all connections to the service */
+
 /** 
 * @brief Set a socket so it won't block
 * 
@@ -88,8 +90,9 @@ poll_mgmt_mkstore(poll_mgmt_t *mngr, int fd, int type, struct fd_cbs_t *cbs, voi
 	data->cbs = cbs;
 	data->shared = shared;
 
-	data->context.data = NULL;
-	data->context.context_gc = NULL;
+	//data->context.data = NULL;
+	//data->context.context_gc = NULL;
+	data->conn = malloc(cbs->conn_size);
 
 	skipset_add(&mngr->store, fd, data);
 	return data;
@@ -130,8 +133,9 @@ poll_mgmt_accept(poll_mgmt_t *mngr, struct fd_evt_t *data)
 	socket_set_nonblock(fd);
 
 	struct fd_evt_t *newdata = poll_mgmt_mkstore(mngr, fd, CONN_CONNECTION, data->cbs, data->shared);
-	newdata->context.fd = fd;
-	newdata->context.shared = newdata->shared;
+	//newdata->context.fd = fd;
+	//newdata->context.shared = newdata->shared;
+	newdata->conn.fd = fd;
 	if (newdata->cbs && newdata->cbs->onopen)
 		newdata->cbs->onopen(&newdata->context);
 

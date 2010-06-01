@@ -5,19 +5,6 @@
 #include <services.h>
 #include <sbuf.h>
 
-/* TODO move to a private header */
-void ws_on_open(struct fd_context_t *context);
-int ws_on_message(struct fd_context_t *context, const char *msg, size_t nbytes);
-void ws_on_close(struct fd_context_t *context);
-
-static const fd_cbs_t ws_callbacks = {
-	.onopen		= ws_on_open,
-	.onmessage	= ws_on_message,
-	.onclose	= ws_on_close,
-};
-
-////////////////////////////////////////////////////////////////////////////////
-
 typedef struct _ws {
 	conn_t *base;
 	sbuf_t *path;
@@ -25,6 +12,22 @@ typedef struct _ws {
 	void (*onmessage)(struct _ws *ws, const char *msg, size_t nbytes);
 	void (*onclose)(struct _ws *ws);
 } ws_t;
+
+////////////////////////////////////////////////////////////////////////////////
+
+/* TODO move to a private header */
+void ws_on_open(conn_t *conn);
+int ws_on_message(conn_t *conn, const char *msg, size_t nbytes);
+void ws_on_close(conn_t *conn);
+
+static const fd_cbs_t ws_callbacks = {
+	.conn_size  = sizeof(ws_t),
+	.onopen		= ws_on_open,
+	.onmessage	= ws_on_message,
+	.onclose	= ws_on_close,
+};
+
+////////////////////////////////////////////////////////////////////////////////
 
 struct ws_iface {
 	int port;

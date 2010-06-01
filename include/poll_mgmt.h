@@ -2,6 +2,7 @@
 #define SMALLHTTP_POLL_MGMT_H
 
 #include <stddef.h>
+#include <conn.h>
 #include <skipset.h>
 
 enum {
@@ -9,21 +10,25 @@ enum {
 	CONN_LISTENING,
 };
 
-typedef void (*context_gc_cb)(void *data);
+/*typedef void (*context_gc_cb)(void *data);
 
 struct fd_context_t {
 	int fd;
 	void *data;
 	void *shared;
 	context_gc_cb context_gc;
-};
+};*/
 
-typedef void (*onopen_cb)(struct fd_context_t *context);
+/*typedef void (*onopen_cb)(struct fd_context_t *context);
 typedef int (*onmessage_cb)(struct fd_context_t *context, const char *msg, size_t nbytes);
-typedef void (*onclose_cb)(struct fd_context_t *context);
+typedef void (*onclose_cb)(struct fd_context_t *context);*/
+typedef void (*onopen_cb)(conn_t *conn);
+typedef int (*onmessage_cb)(conn_t *conn, const char *msg, size_t nbytes);
+typedef void (*onclose_cb)(conn_t *conn);
 
 //struct fd_cbs_t {
 typedef struct {
+	size_t conn_size;
 	onopen_cb onopen;
 	onmessage_cb onmessage;
 	onclose_cb onclose;
@@ -33,8 +38,9 @@ struct fd_evt_t {
 	int fd;
 	int type;
 	struct fd_cbs_t *cbs;
-	struct fd_context_t context;
-	void *shared;
+	//struct fd_context_t context;
+	//void *shared;
+	conn_t *conn;
 };
 
 typedef struct {

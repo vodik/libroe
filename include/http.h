@@ -4,23 +4,30 @@
 #include <services.h>
 #include <response.h>
 #include <parser.h>
+#include <conn.h>
+
+typedef struct {
+	conn_t *base;
+} http_t;
+
+////////////////////////////////////////////////////////////////////////////////
 
 /* TODO move to a private header */
-void http_on_open(struct fd_context_t *context);
-int http_on_message(struct fd_context_t *context, const char *msg, size_t nbytes);
-void http_on_close(struct fd_context_t *context);
+void http_on_open(conn_t *conn);
+int http_on_message(conn_t *conn, const char *msg, size_t nbytes);
+void http_on_close(conn_t *conn);
 
 static const fd_cbs_t http_callbacks = {
+	.conn_size  = sizeof(http_t),
+	/* .data    = <-- FIXME
+	 * .oninit  =
+	 */
 	.onopen		= http_on_open,
 	.onmessage	= http_on_message,
 	.onclose	= http_on_close,
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-
-typedef struct {
-	conn_t *base;
-} http_t;
 
 typedef struct {
 	int method;

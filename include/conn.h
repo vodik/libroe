@@ -12,3 +12,5 @@ typedef struct {
 } conn_t;
 
 void cclose(conn_t *c);
+
+#endif
