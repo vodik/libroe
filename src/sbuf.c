@@ -119,7 +119,7 @@ sbuf_truncate(sbuf_t *sb, int len)
 }*/
 
 void
-sbuf_cat(sbuf_t *sb, const char *str, int len)
+sbuf_ncat(sbuf_t *sb, const char *str, size_t len)
 {
 	sbuf_extendby(sb, len + 1);
 	memcpy(&sb->buf[sb->NUL], str, len);
@@ -139,7 +139,7 @@ sbuf_catb(sbuf_t *sb, sbuf_t *str)
 void
 sbuf_sprintf(sbuf_t *sb, const char *fmt, ...)
 {
-	sbuf_reset(sb);
+	sbuf_init(sb);
 
 	va_list ap;
 	va_start(ap, fmt);
@@ -152,6 +152,6 @@ sbuf_scatf(sbuf_t *sb, const char *fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);
-	sbuf_vappendf(sb, fmt, ap);
+	sbuf_vprintf(sb, fmt, ap);
 	va_end(ap);
 }

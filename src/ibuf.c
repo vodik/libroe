@@ -1,10 +1,13 @@
 #include <ibuf.h>
 
+#include <stdlib.h>
+#include <stdio.h>
+
 void
 ibuf_pull(ibuf_t *b)
 {
 	fprintf(stderr, "--- pulling\n");
-	ssize_t r = b->cb(b->fd, b->buf, b->size);
+	ssize_t r = b->cb(b->dat, b->buf, b->size);
 	if (r < 0)
 		b->err = BUF_ERR;
 	else if (r == 0)
@@ -19,9 +22,9 @@ ibuf_pull(ibuf_t *b)
 ////////////////////////////////////////////////////////////////////////////////
 
 void
-ibuf_init(ibuf_t *b, size_t size, int fd, pull_cb cb)
+ibuf_init(ibuf_t *b, size_t size, void *dat, pull_cb cb)
 {
-	b->fd = fd;
+	b->dat = dat;
 	b->cb = cb;
 	b->err = 0;
 
@@ -47,13 +50,13 @@ ibuf_eof(ibuf_t *b)
 }
 
 void
-ibuf_rot(ibuf *b)
+ibuf_rot(ibuf_t *b)
 {
 	ibuf_pull(b);
 }
 
 size_t
-ibuf_raw(ibuf *b, char **buf)
+ibuf_raw(ibuf_t *b, char **buf)
 {
 	*buf = b->buf + b->i;
 	return b->eob - b->i;

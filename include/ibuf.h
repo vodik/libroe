@@ -20,7 +20,7 @@ typedef struct _ibuf {
 	char *buf;
 } ibuf_t;
 
-void ibuf_init(ibuf_t *b, size_t size, int fd, pull_cb cb);
+void ibuf_init(ibuf_t *b, size_t size, void *dat, pull_cb cb);
 char ibuf_getc(ibuf_t *b);
 int ibuf_eof(ibuf_t *b);
 

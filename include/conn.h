@@ -1,6 +1,8 @@
 #ifndef SMALLHTTP_CONN
 #define SMALLHTTP_CONN
 
+#include <stddef.h>
+
 enum {
 	CONN_OPEN,
 	CONN_CLOSED,

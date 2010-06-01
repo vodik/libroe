@@ -6,7 +6,7 @@
 #include <sbuf.h>
 
 typedef struct _ws {
-	conn_t *base;
+	conn_t base;
 	sbuf_t *path;
 
 	void (*onmessage)(struct _ws *ws, const char *msg, size_t nbytes);
