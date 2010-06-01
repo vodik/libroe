@@ -60,7 +60,7 @@ typedef struct http_parser {
 	struct state_t state;
 } http_parser;
 
-void http_parser_init(http_parser *);
+void http_parser_init(http_parser *parser, int fd);
 void http_parser_set_buffer(http_parser *, const char *buf, size_t nbytes);
 int http_parser_next_event(http_parser *parser, char *buf, size_t nbytes, event_data_t *evt);
 

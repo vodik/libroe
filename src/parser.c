@@ -4,7 +4,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <unistd.h>
+#include <sys/time.h>
 
+#include <ibuf.h>
 #include <sbuf.h>
 
 struct _temp {
@@ -13,26 +16,25 @@ struct _temp {
 };
 
 int
-pull_fd(void *dat, void *buf, size_t nbytes)
+pull_fd(void *arg, void *buf, size_t nbytes)
 {
-	struct _temp temp = dat;
+	struct _temp *dat = arg;
 
 	fd_set fds;
-	struct timeval tv;
 	int n;
 
 	FD_ZERO(&fds);
 	FD_SET(dat->fd, &fds);
 
-	n = select(fd + 1, &fds, NULL, NULL, &dat->tv);
+	n = select(dat->fd + 1, &fds, NULL, NULL, &dat->tv);
 	if (n > 0) {
-		if (FD_ISSET(fd, &fds)) {
-			n = read(fd, buf, nbytes);
+		if (FD_ISSET(dat->fd, &fds)) {
+			n = read(dat->fd, buf, nbytes);
 			return n;
 		}
 	}
 	printf("--- timeout\n");
-	return BUF_ERR;
+	return BUF_TIMEOUT;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -152,7 +154,7 @@ state_field(struct state_t *state, char *buf, size_t nbytes)
 size_t
 http_parser_read(http_parser *parser)
 {
-	size_t r = read(parser->state.buf, parser->state.len);
+	//size_t r = read(parser->state.buf, parser->state.len);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -165,7 +167,7 @@ http_parser_init(http_parser *parser, int fd)
 	parser->state.len = 0;
 	parser->state.read = 0;
 
-	parser->fd = fd;
+	//parser->fd = fd;
 }
 
 int

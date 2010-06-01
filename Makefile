@@ -1,34 +1,20 @@
-CC = gcc
-CFLAGS = -Wall -pedantic --std=gnu99 -I./include -O0 -g -D_GNU_SOURCE
-LDFLAGS =
+DIRS = src
 
-SRC = deflate.c      \
-      hashtable.c    \
-      http.c         \
-      main.c         \
-      parser.c       \
-      poll_mgmt.c    \
-      response.c     \
-      skipset.c      \
-      smallhttp.c    \
-      test_http.c    \
-      uri.c          \
-      urlencode.c    \
-      util.c         \
-      websocks.c
-      #sbuf.c         
-OBJ = ${SRC:.c=.o}
+all: ${DIRS}
 
-all: test
+src: force
+	@echo building src...
+	@cd $@; ${MAKE} ${MFLAGS}
 
-%.o: %.c
-	@echo CC $@
-	@${CC} -o $@ -c ${CFLAGS} $<
+tests: force
+	@echo building tests...
+	@cd $@; ${MAKE} ${MFLAGS}
 
-test: ${OBJ}
-	@echo CC -o $@
-	@${CC} -o $@ ${OBJ} ${LDFLAGS}
+force:
+	true
 
 clean:
 	@echo cleaning...
 	@rm -f test ${OBJ}
+
+.PHONY: all clean
