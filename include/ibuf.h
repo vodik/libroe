@@ -1,3 +1,6 @@
+#ifndef SMALLHTTP_IBUF
+#define SMALLHTTP_IBUF
+
 #include <stddef.h>
 
 enum {
@@ -23,3 +26,5 @@ int ibuf_eof(ibuf_t *b);
 
 void ibuf_rot(ibuf_t *b);
 size_t ibuf_raw(ibuf_t *b, char **buf);
+
+#endif

@@ -41,56 +41,78 @@ pull_fd(void *arg, void *buf, size_t nbytes)
 
 state_fn state_method, state_path, state_version, state_header, state_field;
 
+static state_fn *States[LAST_HTTP_DATA] = {
+	[HTTP_DATA_METHOD]  = &state_method,
+	[HTTP_DATA_PATH]    = &state_path,
+	[HTTP_DATA_VERSION] = &state_version,
+	[HTTP_DATA_HEADER]  = &state_header,
+	[HTTP_DATA_FIELD]   = &state_field,
+};
+
+static int Transforms[LAST_HTTP_DATA] = {
+	[HTTP_DATA_METHOD]  = HTTP_DATA_PATH,
+	[HTTP_DATA_PATH]    = HTTP_DATA_VERSION,
+	[HTTP_DATA_VERSION] = HTTP_DATA_HEADER,
+	[HTTP_DATA_HEADER]  = HTTP_DATA_FIELD,
+	[HTTP_DATA_FIELD]   = HTTP_DATA_HEADER,
+};
+
 enum {
-	STATE_CONTINUE,
 	STATE_ACCEPT,
 	STATE_FAIL,
+	STATE_TIMEOUT,
 };
 
 int
-state_method(struct state_t *state, char *buf, size_t nbytes)
+state_method(struct state_t *state)
 {
+	ibuf_t *b = &state->buf;
+	sbuf_t *d = &state->dest;
 	char c;
 
-	while (state->len-- > 0 && state->read++ < nbytes) {
-		c = *state->buf++;
-		if (c == ' ') {
+	while (!ibuf_eof(b)) {
+		c = ibuf_getc(b);
+		//++state->read;
+
+		if (c == ' ')
 			return STATE_ACCEPT;
-		} else if (c >= 'A' && c <= 'Z') {
-			*buf++ = c;
-		} else {
+		else if (c >= 'A' && c <= 'Z')
+			sbuf_putc(d, c);
+		else
 			return STATE_FAIL;
-		}
 	}
-	return STATE_CONTINUE;
+	return STATE_FAIL;
 }
 
 int
-state_path(struct state_t *state, char *buf, size_t nbytes)
+state_path(struct state_t *state)
 {
+	ibuf_t *b = &state->buf;
+	sbuf_t *d = &state->dest;
 	char c;
 
-	while (state->len-- > 0 && state->read++ < nbytes) {
-		c = *state->buf++;
-		switch (c) {
-			case ' ':
-				return STATE_ACCEPT;
-			default:
-				*buf++ = c;
-				break;
-		}
+	while (!ibuf_eof(b)) {
+		c = ibuf_getc(b);
+
+		if (c == ' ')
+			return STATE_ACCEPT;
+		else
+			sbuf_putc(d, c);
 	}
-	return STATE_CONTINUE;
+	return STATE_FAIL;
 }
 
 int
-state_version(struct state_t *state, char *buf, size_t nbytes)
+state_version(struct state_t *state)
 {
 	int term = 0;
+	ibuf_t *b = &state->buf;
+	sbuf_t *d = &state->dest;
 	char c;
 
-	while (state->len-- > 0 && state->read++ < nbytes) {
-		c = *state->buf++;
+	while (!ibuf_eof(b)) {
+		c = ibuf_getc(b);
+
 		switch (c) {
 			case '\r':
 				term = 1;
@@ -99,42 +121,43 @@ state_version(struct state_t *state, char *buf, size_t nbytes)
 				if (term)
 					return STATE_ACCEPT;
 			default:
-				*buf++ = c;
+				sbuf_putc(d, c);
 				term = 0;
 				break;
 		}
 	}
-	return STATE_CONTINUE;
+	return STATE_FAIL;
 }
 
 int
-state_header(struct state_t *state, char *buf, size_t nbytes)
+state_header(struct state_t *state)
 {
+	ibuf_t *b = &state->buf;
+	sbuf_t *d = &state->dest;
 	char c;
 
-	/* DON'T CHECK IF PARSING IS DONE HERE, THATS NOT APPROPRIATE */
+	while (!ibuf_eof(b)) {
+		c = ibuf_getc(b);
 
-	while (state->len-- > 0 && state->read++ < nbytes) {
-		c = *state->buf++;
-		switch (c) {
-			case ':':
-				return STATE_ACCEPT;
-			default:
-				*buf++ = c;
-				break;
-		}
+		if (c == ':')
+			return STATE_ACCEPT;
+		else
+			sbuf_putc(d, c);
 	}
-	return STATE_CONTINUE;
+	return STATE_FAIL;
 }
 
 int
-state_field(struct state_t *state, char *buf, size_t nbytes)
+state_field(struct state_t *state)
 {
 	int term = 0;
+	ibuf_t *b = &state->buf;
+	sbuf_t *d = &state->dest;
 	char c;
 
-	while (state->len-- > 0 && state->read++ < nbytes) {
-		c = *state->buf++;
+	while (!ibuf_eof(b)) {
+		c = ibuf_getc(b);
+
 		switch (c) {
 			case '\r':
 				term = 1;
@@ -143,34 +166,55 @@ state_field(struct state_t *state, char *buf, size_t nbytes)
 				if (term)
 					return STATE_ACCEPT;
 			default:
-				*buf++ = c;
+				sbuf_putc(d, c);
 				term = 0;
 				break;
 		}
 	}
-	return STATE_CONTINUE;
-}
-
-size_t
-http_parser_read(http_parser *parser)
-{
-	//size_t r = read(parser->state.buf, parser->state.len);
+	return STATE_FAIL;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 void
-http_parser_init(http_parser *parser, int fd)
+http_parser_init(http_parser *parser, conn_t *conn, int timeout)
 {
 	parser->state.state = HTTP_DATA_METHOD;
-	parser->state.next = state_method;
-	parser->state.len = 0;
-	parser->state.read = 0;
 
-	//parser->fd = fd;
+	
+	/*ibuf_init(&parser->state.buf);*/
+	//sbuf_init(&parser->state.dest);
 }
 
-int
+void http_parser_cleanup(http_parser *parser)
+{
+	/*ibuf_cleanup(&parser->state.buf);
+	sbuf_cleanup(&parser->state.dest);*/
+}
+
+int http_parser_next(http_parser *parser, const char **buf, size_t *len)
+{
+	struct state_t *state = &parser->state;
+	state_fn *func = States[state->state];
+	int ret;
+
+	/* check if done here */
+
+	ret = func(state);
+	switch (ret) {
+		case STATE_ACCEPT:
+			ret = state->state;
+			state->state = Transforms[state->state];
+			return ret;
+		case STATE_TIMEOUT:
+			return HTTP_EVT_TIMEOUT;
+		case STATE_FAIL:
+		default:
+			return HTTP_EVT_ERROR;
+	}
+}
+
+/*int
 http_parser_next_event(http_parser *parser, char *buf, size_t nbytes, event_data_t *evt)
 {
 	int event = -1;
@@ -181,7 +225,7 @@ http_parser_next_event(http_parser *parser, char *buf, size_t nbytes, event_data
 				break;
 			case STATE_FAIL:
 				break;
-			case STATE_CONTINUE:
+			case STATE_TIMEOUT:
 				break;
 			default:
 				break;
@@ -189,4 +233,4 @@ http_parser_next_event(http_parser *parser, char *buf, size_t nbytes, event_data
 	}
 
 	return event;
-}
+}*/

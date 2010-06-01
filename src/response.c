@@ -12,7 +12,7 @@
 #include <netinet/in.h>
 #include <hashtable.h>
 
-void
+/*void
 http_response_init(http_response *response, int fd)
 {
 	response->sending = 0;
@@ -84,4 +84,14 @@ http_response_end(http_response *response)
 		send(fd, "0\r\n\r\n", 5, 0);
 	}
 }
+*/
 
+void
+http_response_init(http_response *response, conn_t *conn)
+{
+}
+
+void
+http_response_cleanup(http_response *response)
+{
+}

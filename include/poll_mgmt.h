@@ -14,20 +14,12 @@ typedef void (*onopen_cb)(conn_t *conn);
 typedef int (*onmessage_cb)(conn_t *conn, const char *msg, size_t nbytes);
 typedef void (*onclose_cb)(conn_t *conn);
 
-//struct fd_cbs_t {
 typedef struct {
 	size_t conn_size;
 	onopen_cb onopen;
 	onmessage_cb onmessage;
 	onclose_cb onclose;
 } fd_cbs_t;
-
-struct fd_evt_t {
-	int fd;
-	int type;
-	struct fd_cbs_t *cbs;
-	conn_t *conn;
-};
 
 typedef struct {
 	int fd;
@@ -39,7 +31,7 @@ typedef struct {
 
 void poll_mgmt_start(poll_mgmt_t *mngr, int size);
 void poll_mgmt_stop(poll_mgmt_t *mngr);
-int poll_mgmt_listen(poll_mgmt_t *mngr, int port, struct fd_cbs_t *cbs, void *shared);
+int poll_mgmt_listen(poll_mgmt_t *mngr, int port, fd_cbs_t *cbs, void *shared);
 void poll_mgmt_close(poll_mgmt_t *mngr, int fd);
 int poll_mgmt_poll(poll_mgmt_t *mngr, int timeout);
 

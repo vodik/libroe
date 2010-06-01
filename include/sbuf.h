@@ -28,6 +28,8 @@ char *sbuf_detach(sbuf_t *sb);
 void sbuf_move(sbuf_t *src, sbuf_t *dest);
 void sbuf_dup(sbuf_t *src, sbuf_t *dest);
 
+void sbuf_putc(sbuf_t *sb, const char c);
+
 void sbuf_cat(sbuf_t *sb, const char *str);
 void sbuf_ncat(sbuf_t *sb, const char *str, size_t len);
 void sbuf_bcat(sbuf_t *sb, const sbuf_t *buf);

@@ -7,20 +7,20 @@
 #include <string.h>
 #include <errno.h>
 #include <http.h>
-#include <websocks.h>
+#include <websocket.h>
 
 int
 smallhttp_start(smallhttpd_t *httpd, int size, struct http_iface *iface)
 {
 	poll_mgmt_start(&httpd->polling, size);
-	http_start(&httpd->services[0], &httpd->polling, iface);
+	/*http_start(&httpd->services[0], &httpd->polling, iface) FIXME */
 	return 0;
 }
 
 int
 smallhttp_open_websocket(smallhttpd_t *httpd, struct ws_iface *iface)
 {
-	websocks_start(&httpd->services[1], &httpd->polling, iface);
+	/*websocks_start(&httpd->services[1], &httpd->polling, iface); FIXME */
 	return 0;
 }
 

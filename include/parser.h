@@ -4,6 +4,9 @@
 #include <stddef.h>
 #include <conn.h>
 
+#include <ibuf.h>
+#include <sbuf.h>
+
 enum http_methods {
 	HTTP_METHOD_DELETE,
 	HTTP_METHOD_GET,
@@ -34,29 +37,28 @@ enum http_parser_evt {
 	HTTP_DATA_VERSION,
 	HTTP_DATA_HEADER,
 	HTTP_DATA_FIELD,
+	LAST_HTTP_DATA,
 
 	HTTP_EVT_HEADER_DONE,
 	HTTP_EVT_BODY_DONE,
-	HTTP_EVT_ERROR
+	HTTP_EVT_ERROR,
+	HTTP_EVT_TIMEOUT,
 };
 
 struct state_t;
-typedef int state_fn(struct state_t *state, char *buf, size_t nbytes);
+typedef int state_fn(struct state_t *state);
 
 struct state_t {
-	const char *buf;
-	size_t len;
-	size_t read;
-
+	ibuf_t buf;
+	sbuf_t dest;
 	int state;
-	state_fn *next;
 };
 
 typedef struct http_parser {
 	struct state_t state;
 } http_parser;
 
-void http_parser_init(http_parser *parser, conn_t *conn);
+void http_parser_init(http_parser *parser, conn_t *conn, int timeout);
 void http_parser_cleanup(http_parser *parser);
 int http_parser_next(http_parser *parser, const char **buf, size_t *len);
 

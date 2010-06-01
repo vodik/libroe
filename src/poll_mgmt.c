@@ -15,6 +15,13 @@
 #include "util.h"
 #include "config.h"
 
+struct fd_evt_t {
+	int fd;
+	int type;
+	fd_cbs_t *cbs;
+	conn_t *conn;
+};
+
 /* FIXME: tie all connections to the service */
 
 /** 
@@ -58,9 +65,8 @@ fd_cleanup(void *arg)
 
 	if (data->type != CONN_LISTENING) {
 		if (data->cbs && data->cbs->onclose)
-			data->cbs->onclose(&data->context);
-		if (data->context.context_gc)
-			data->context.context_gc(data->context.data);
+			data->cbs->onclose(data->conn);
+		conn_unref(data->conn);
 	}
 
 	close(data->fd);
@@ -82,13 +88,13 @@ fd_cleanup(void *arg)
 * data structure.
 */
 static struct fd_evt_t *
-poll_mgmt_mkstore(poll_mgmt_t *mngr, int fd, int type, struct fd_cbs_t *cbs, void *shared)
+poll_mgmt_mkstore(poll_mgmt_t *mngr, int fd, int type, fd_cbs_t *cbs, void *shared)
 {
 	struct fd_evt_t *data = malloc(sizeof(struct fd_evt_t));
 	data->fd = fd;
 	data->type = type;
 	data->cbs = cbs;
-	data->shared = shared;
+	//data->shared = shared;
 
 	data->conn = conn_new(cbs->conn_size, fd);
 
@@ -130,12 +136,10 @@ poll_mgmt_accept(poll_mgmt_t *mngr, struct fd_evt_t *data)
 	//socket_set_reuseaddr(fd, 1);
 	socket_set_nonblock(fd);
 
-	struct fd_evt_t *newdata = poll_mgmt_mkstore(mngr, fd, CONN_CONNECTION, data->cbs, data->shared);
-	//newdata->context.fd = fd;
-	//newdata->context.shared = newdata->shared;
-	newdata->conn.fd = fd;
+	//struct fd_evt_t *newdata = poll_mgmt_mkstore(mngr, fd, CONN_CONNECTION, data->cbs, data->shared);
+	struct fd_evt_t *newdata = poll_mgmt_mkstore(mngr, fd, CONN_CONNECTION, data->cbs, NULL); /* FIXME */
 	if (newdata->cbs && newdata->cbs->onopen)
-		newdata->cbs->onopen(&newdata->context);
+		newdata->cbs->onopen(newdata->conn);
 
 	evt.events = EPOLLIN;
 	evt.data.ptr = newdata;
@@ -160,12 +164,12 @@ poll_mgmt_handle(poll_mgmt_t *mngr, struct fd_evt_t *data)
 	if (r != 0 && data->cbs && data->cbs->onopen) {
 		printf("%d: oh my god - %d!\n", data->fd, r);
 		buf[r] = '\0';
-		keepalive = data->cbs->onmessage(&data->context, buf, r);
+		keepalive = data->cbs->onmessage(data->conn, buf, r);
 	}
 
 	if (!keepalive) {
 		if (data->cbs && data->cbs->onclose)
-			data->cbs->onclose(&data->context);
+			data->cbs->onclose(data->conn);
 
 		printf("--> closing fd!\n");
 		if (epoll_ctl(mngr->fd, EPOLL_CTL_DEL, data->fd, NULL) == -1)
@@ -221,7 +225,7 @@ poll_mgmt_stop(poll_mgmt_t *mngr)
 * @return The file descriptor of the listening socket.
 */
 int
-poll_mgmt_listen(poll_mgmt_t *mngr, int port, struct fd_cbs_t *cbs, void *shared)
+poll_mgmt_listen(poll_mgmt_t *mngr, int port, fd_cbs_t *cbs, void *shared)
 {
 	struct sockaddr_in addr;
 	struct epoll_event evt;

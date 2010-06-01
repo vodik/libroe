@@ -34,7 +34,7 @@ http_on_message(conn_t *conn, const char *msg, size_t nbytes)
 		/* use buf, len */
 	}
 	switch (code) {
-		case ETIMEOUT:
+		case HTTP_EVT_TIMEOUT:
 			return 0;
 		default:
 			die("error");
@@ -51,6 +51,10 @@ http_on_message(conn_t *conn, const char *msg, size_t nbytes)
 	http_response_init(&response, conn);
 	/* send */
 	http_response_cleanup(&response);
+
+	/* determine if keep alive */
+	//return CONN_CLOSE;
+	return 0;
 }
 
 void
