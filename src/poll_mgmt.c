@@ -90,9 +90,7 @@ poll_mgmt_mkstore(poll_mgmt_t *mngr, int fd, int type, struct fd_cbs_t *cbs, voi
 	data->cbs = cbs;
 	data->shared = shared;
 
-	//data->context.data = NULL;
-	//data->context.context_gc = NULL;
-	data->conn = malloc(cbs->conn_size);
+	data->conn = conn_new(cbs->conn_size, fd);
 
 	skipset_add(&mngr->store, fd, data);
 	return data;
@@ -173,8 +171,7 @@ poll_mgmt_handle(poll_mgmt_t *mngr, struct fd_evt_t *data)
 		if (epoll_ctl(mngr->fd, EPOLL_CTL_DEL, data->fd, NULL) == -1)
 			die("%d: epoll_ctl failed to remove connection\n", __LINE__);
 
-		if (data->context.context_gc)
-			data->context.context_gc(data->context.data);
+		conn_unref(data->conn);
 
 		close(data->fd);
 		poll_mgmt_removestore(mngr, data->fd);

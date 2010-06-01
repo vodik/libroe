@@ -9,8 +9,14 @@ enum {
 typedef struct {
 	int fd;
 	int status;
+
+	int ref;
 } conn_t;
 
-void cclose(conn_t *c);
+conn_t *conn_new(size_t size, int fd);
+conn_t *conn_ref(conn_t *c);
+
+void conn_close(conn_t *c);
+void conn_unref(conn_t *c);
 
 #endif
