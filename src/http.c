@@ -22,7 +22,7 @@ http_on_open(conn_t *conn)
 }
 
 int
-http_on_message(conn_t *conn, const char *msg, size_t nbytes)
+http_on_message(conn_t *conn)
 {
 	http_parser reader;
 	const char *buf;

@@ -11,7 +11,7 @@ enum {
 };
 
 typedef void (*onopen_cb)(conn_t *conn);
-typedef int (*onmessage_cb)(conn_t *conn, const char *msg, size_t nbytes);
+typedef int (*onmessage_cb)(conn_t *conn);
 typedef void (*onclose_cb)(conn_t *conn);
 
 typedef struct {

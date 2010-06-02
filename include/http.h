@@ -14,7 +14,7 @@ typedef struct {
 
 /* TODO move to a private header */
 void http_on_open(conn_t *conn);
-int http_on_message(conn_t *conn, const char *msg, size_t nbytes);
+int http_on_message(conn_t *conn);
 void http_on_close(conn_t *conn);
 
 static const fd_cbs_t http_callbacks = {
