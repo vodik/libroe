@@ -1,8 +1,8 @@
 CC = gcc
-CFLAGS = -Wall -pedantic -fPIC --std=gnu99 -I../include -O0 -g -D_GNU_SOURCE
+CFLAGS = -Wall -Werror -pedantic -fPIC --std=gnu99 -I../include -O0 -g -D_GNU_SOURCE
 LDFLAGS = -shared -Wl,-soname,libsmallhttp.so.1
 
-SRC = deflate.c      \
+SRC = services.c     \
 	  conn.c         \
 	  hashtable.c    \
 	  http.c         \
@@ -11,7 +11,6 @@ SRC = deflate.c      \
 	  response.c     \
 	  skipset.c      \
 	  smallhttp.c    \
-	  uri.c          \
 	  urlencode.c    \
 	  util.c         \
 	  websocket.c    \

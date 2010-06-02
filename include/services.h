@@ -14,12 +14,7 @@ typedef struct {
 	//void *events;
 } service_t;
 
-typedef struct {
-	const char *name;
-	fd_cbs_t *cbs;
-} srv_descpt_t;
-
-void service_start(service_t *ws, poll_mgmt_t *mgmt, void *iface);
+int service_start(service_t *service, const char *name, poll_mgmt_t *mgmt, int port, void *iface);
 //void service_end(poll_mgmt_t *mgmt, struct service_t *service);
 
 #endif

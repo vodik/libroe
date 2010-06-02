@@ -18,7 +18,7 @@
 struct fd_evt_t {
 	int fd;
 	int type;
-	fd_cbs_t *cbs;
+	const fd_cbs_t *cbs;
 	conn_t *conn;
 };
 
@@ -88,15 +88,16 @@ fd_cleanup(void *arg)
 * data structure.
 */
 static struct fd_evt_t *
-poll_mgmt_mkstore(poll_mgmt_t *mngr, int fd, int type, fd_cbs_t *cbs, void *shared)
+poll_mgmt_mkstore(poll_mgmt_t *mngr, int fd, int type, const fd_cbs_t *cbs, void *shared)
 {
 	struct fd_evt_t *data = malloc(sizeof(struct fd_evt_t));
 	data->fd = fd;
 	data->type = type;
 	data->cbs = cbs;
-	//data->shared = shared;
+	/*data->shared = shared;*/
 
-	data->conn = conn_new(cbs->conn_size, fd);
+	/* we don't want a connection data type for listening connections <- FIXME: we do want service_conn_t */
+	data->conn = type != CONN_LISTENING ? conn_new(cbs->conn_size, fd) : NULL;
 
 	skipset_add(&mngr->store, fd, data);
 	return data;
@@ -157,15 +158,15 @@ poll_mgmt_accept(poll_mgmt_t *mngr, struct fd_evt_t *data)
 static void
 poll_mgmt_handle(poll_mgmt_t *mngr, struct fd_evt_t *data)
 {
-	static char buf[POLL_MGMT_BUFF_SIZE];
+	//static char buf[POLL_MGMT_BUFF_SIZE];
 	int keepalive = 0;
 
-	int r = read(data->fd, buf, POLL_MGMT_BUFF_SIZE);
+	/*int r = read(data->fd, buf, POLL_MGMT_BUFF_SIZE);
 	if (r != 0 && data->cbs && data->cbs->onopen) {
 		printf("%d: oh my god - %d!\n", data->fd, r);
 		buf[r] = '\0';
-		keepalive = data->cbs->onmessage(data->conn, buf, r);
-	}
+		keepalive = data->cbs->onmessage(data->conn);
+	}*/
 
 	if (!keepalive) {
 		if (data->cbs && data->cbs->onclose)
@@ -175,7 +176,8 @@ poll_mgmt_handle(poll_mgmt_t *mngr, struct fd_evt_t *data)
 		if (epoll_ctl(mngr->fd, EPOLL_CTL_DEL, data->fd, NULL) == -1)
 			die("%d: epoll_ctl failed to remove connection\n", __LINE__);
 
-		conn_unref(data->conn);
+		if (data->conn)
+			conn_unref(data->conn);
 
 		close(data->fd);
 		poll_mgmt_removestore(mngr, data->fd);
@@ -225,7 +227,7 @@ poll_mgmt_stop(poll_mgmt_t *mngr)
 * @return The file descriptor of the listening socket.
 */
 int
-poll_mgmt_listen(poll_mgmt_t *mngr, int port, fd_cbs_t *cbs, void *shared)
+poll_mgmt_listen(poll_mgmt_t *mngr, int port, const fd_cbs_t *cbs, void *shared)
 {
 	struct sockaddr_in addr;
 	struct epoll_event evt;
@@ -252,7 +254,7 @@ poll_mgmt_listen(poll_mgmt_t *mngr, int port, fd_cbs_t *cbs, void *shared)
 	evt.data.ptr = poll_mgmt_mkstore(mngr, fd, CONN_LISTENING, cbs, shared);
 	if (epoll_ctl(mngr->fd, EPOLL_CTL_ADD, fd, &evt) == -1)
 		die("epoll_ctl failed to add listening connection on port %d\n", port);
-	
+
 	return fd;
 }
 

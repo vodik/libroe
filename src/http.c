@@ -18,12 +18,14 @@
 void
 http_on_open(conn_t *conn)
 {
-	printf("--> opening\n");
+	printf("==> HTTP START: %d\n", conn->fd);
 }
 
 int
 http_on_message(conn_t *conn)
 {
+	printf("==> HTTP MESSAGE: %d\n", conn->fd);
+
 	http_parser reader;
 	const char *buf;
 	size_t len;
@@ -60,4 +62,5 @@ http_on_message(conn_t *conn)
 void
 http_on_close(conn_t *conn)
 {
+	printf("==> HTTP CLOSE: %d\n", conn->fd);
 }

@@ -72,7 +72,6 @@ state_method(struct state_t *state)
 
 	while (!ibuf_eof(b)) {
 		c = ibuf_getc(b);
-		//++state->read;
 
 		if (c == ' ')
 			return STATE_ACCEPT;
@@ -181,7 +180,6 @@ http_parser_init(http_parser *parser, conn_t *conn, int timeout)
 {
 	parser->state.state = HTTP_DATA_METHOD;
 
-	
 	/*ibuf_init(&parser->state.buf);*/
 	//sbuf_init(&parser->state.dest);
 }
@@ -213,24 +211,3 @@ int http_parser_next(http_parser *parser, const char **buf, size_t *len)
 			return HTTP_EVT_ERROR;
 	}
 }
-
-/*int
-http_parser_next_event(http_parser *parser, char *buf, size_t nbytes, event_data_t *evt)
-{
-	int event = -1;
-
-	if (parser->state.len > 0 && parser->state.next) {
-		switch (parser->state.next(&parser->state, buf, nbytes)) {
-			case STATE_ACCEPT:
-				break;
-			case STATE_FAIL:
-				break;
-			case STATE_TIMEOUT:
-				break;
-			default:
-				break;
-		}
-	}
-
-	return event;
-}*/

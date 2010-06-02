@@ -49,6 +49,8 @@ main(int argc, char *argv[])
 		}
 	}
 
+	printf("--> port: %d\n", test_iface.port);
+
 	smallhttp_start(&httpd, POLL_EVENTS, &test_iface);
 	smallhttp_open_websocket(&httpd, &ws_iface);
 

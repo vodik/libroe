@@ -26,3 +26,4 @@ typedef struct _irc {
 	//void (*onclose)(struct _ws *ws);
 } irc_t;
 
+#endif
