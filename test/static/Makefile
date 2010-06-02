@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -pedantic --std=gnu99 -I../../include -O0 -g -D_GNU_SOURCE
-LDFLAGS = -L../../src -lsmallhttp
+LDFLAGS = -L../../lib -lsmallhttp
 
 SRC = main.c    \
 	  static.c

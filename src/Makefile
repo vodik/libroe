@@ -24,8 +24,9 @@ all: libsmallhttp.so
 libsmallhttp.so: ${OBJ}
 	@echo CC -o $@
 	@${CC} ${LDFLAGS} -o $@.1.0 ${OBJ}
-	@ln -sf $@.1.0 $@
-	@ln -sf $@.1.0 $@.1
+	@ln -f $@.1.0 ../lib/$@
+	@ln -f $@.1.0 ../lib/$@.1
+	@ln -f $@.1.0 ../lib/$@.1.0
 
 %.o: %.c
 	@echo CC $@
@@ -33,6 +34,6 @@ libsmallhttp.so: ${OBJ}
 
 clean:
 	@echo cleaning...
-	@rm -f test ${OBJ}
+	@rm -f libsmallhttp.so.1.0 ${OBJ} ../lib/*
 
 .PHONY: all clean
