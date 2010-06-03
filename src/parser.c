@@ -10,15 +10,10 @@
 #include <ibuf.h>
 #include <sbuf.h>
 
-struct _temp {
-	int fd;
-	struct timeval tv;
-};
-
 int
-pull_fd(void *arg, void *buf, size_t nbytes)
+pull_tm_conn(void *arg, void *buf, size_t nbytes)
 {
-	struct _temp *dat = arg;
+	struct ibuf_store *dat = arg;
 
 	fd_set fds;
 	int n;
@@ -131,6 +126,7 @@ state_version(struct state_t *state)
 int
 state_header(struct state_t *state)
 {
+	int term = 0;
 	ibuf_t *b = &state->buf;
 	sbuf_t *d = &state->dest;
 	char c;
@@ -138,10 +134,18 @@ state_header(struct state_t *state)
 	while (!ibuf_eof(b)) {
 		c = ibuf_getc(b);
 
-		if (c == ':')
-			return STATE_ACCEPT;
-		else
-			sbuf_putc(d, c);
+		switch (c) {
+			case ':':
+				term = 1;
+				break;
+			case ' ':
+				if (term)
+					return STATE_ACCEPT;
+			default:
+				sbuf_putc(d, c);
+				term = 0;
+				break;
+		}
 	}
 	return STATE_FAIL;
 }
@@ -176,18 +180,21 @@ state_field(struct state_t *state)
 ////////////////////////////////////////////////////////////////////////////////
 
 void
-http_parser_init(http_parser *parser, conn_t *conn, int timeout)
+http_parser_init(http_parser *parser, conn_t *conn, size_t size, int timeout)
 {
 	parser->state.state = HTTP_DATA_METHOD;
+	parser->store.fd = conn->fd;
+	parser->store.tv.tv_sec = timeout;
+	parser->store.tv.tv_usec = 0;
 
-	/*ibuf_init(&parser->state.buf);*/
-	//sbuf_init(&parser->state.dest);
+	ibuf_init(&parser->state.buf, size, &parser->store, pull_tm_conn);
+	sbuf_init(&parser->state.dest, 0);
 }
 
 void http_parser_cleanup(http_parser *parser)
 {
-	/*ibuf_cleanup(&parser->state.buf);
-	sbuf_cleanup(&parser->state.dest);*/
+	ibuf_cleanup(&parser->state.buf);
+	sbuf_cleanup(&parser->state.dest);
 }
 
 int http_parser_next(http_parser *parser, const char **buf, size_t *len)
@@ -196,10 +203,26 @@ int http_parser_next(http_parser *parser, const char **buf, size_t *len)
 	state_fn *func = States[state->state];
 	int ret;
 
+	static int _die = 0;
+	if (_die == 15)
+		return 0;
 	/* check if done here */
 
+	sbuf_clear(&parser->state.dest);
+
 	ret = func(state);
-	switch (ret) {
+
+	if (ret == STATE_ACCEPT) {
+		ret = state->state;
+		state->state = Transforms[state->state];
+		printf("%%%%%% state: \"%s\"\n", parser->state.dest.buf);
+		++_die;
+		return ret;
+	}
+	else
+		return 0;
+
+	/*switch (ret) {
 		case STATE_ACCEPT:
 			ret = state->state;
 			state->state = Transforms[state->state];
@@ -209,5 +232,5 @@ int http_parser_next(http_parser *parser, const char **buf, size_t *len)
 		case STATE_FAIL:
 		default:
 			return HTTP_EVT_ERROR;
-	}
+	}*/
 }

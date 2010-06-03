@@ -30,7 +30,7 @@ ws_on_message(conn_t *conn)
 	size_t len;
 	int code;
 
-	http_parser_init(&reader, conn, 60);
+	http_parser_init(&reader, conn, 2048, 60);
 	while ((code = http_parser_next(&reader, &buf, &len)) > 0) {
 		/* use buf, len */
 	}

@@ -34,6 +34,12 @@ ibuf_init(ibuf_t *b, size_t size, void *dat, pull_cb cb)
 	ibuf_pull(b);
 }
 
+void
+ibuf_cleanup(ibuf_t *b)
+{
+	free(b->buf);
+}
+
 char
 ibuf_getc(ibuf_t *b)
 {

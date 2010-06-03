@@ -21,6 +21,8 @@ typedef struct _ibuf {
 } ibuf_t;
 
 void ibuf_init(ibuf_t *b, size_t size, void *dat, pull_cb cb);
+void ibuf_cleanup(ibuf_t *b);
+
 char ibuf_getc(ibuf_t *b);
 int ibuf_eof(ibuf_t *b);
 

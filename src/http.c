@@ -31,15 +31,17 @@ http_on_message(conn_t *conn)
 	size_t len;
 	int code;
 
-	http_parser_init(&reader, conn, 60);
+	http_parser_init(&reader, conn, 512, 60);
 	while ((code = http_parser_next(&reader, &buf, &len)) > 0) {
 		/* use buf, len */
 	}
 	switch (code) {
 		case HTTP_EVT_TIMEOUT:
+			printf("==> TIMEOUT\n");
 			return 0;
-		default:
+		case HTTP_EVT_ERROR:
 			die("error");
+			break;
 	}
 	http_parser_cleanup(&reader);
 

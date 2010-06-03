@@ -21,8 +21,9 @@ typedef struct _sbuf {
 /* shorthand to get a char * from an sbuf_t */
 #define _S(SB) sbuf_raw(SB)
 
-sbuf_t *sbuf_new(size_t reserve);
-void sbuf_free(sbuf_t *sb);
+void sbuf_init(sbuf_t *sb, size_t reserve);
+void sbuf_cleanup(sbuf_t *sb);
+
 void sbuf_clear(sbuf_t *sb);
 char *sbuf_detach(sbuf_t *sb);
 void sbuf_move(sbuf_t *src, sbuf_t *dest);

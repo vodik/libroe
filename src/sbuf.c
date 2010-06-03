@@ -44,58 +44,32 @@ sbuf_vprintf(sbuf_t *sb, const char *fmt, const va_list ap)
 	sb->NUL += num_required;
 }
 
-static void
-sbuf_init(sbuf_t *sb)
+////////////////////////////////////////////////////////////////////////////////
+
+void
+sbuf_init(sbuf_t *sb, size_t reserve)
 {
 	sb->buf = NULL;
 	sb->NUL = 0;
 	sb->buflen = 0;
-}
 
-////////////////////////////////////////////////////////////////////////////////
-
-sbuf_t *
-sbuf_new(size_t reserve)
-{
-	sbuf_t *sb = malloc(sizeof(*sb));
-	if (!sb)
-		return NULL;
-
-	sbuf_init(sb);
-	return sb;
+	if (reserve)
+		sbuf_extendby(sb, reserve + 1);
 }
 
 void
-sbuf_free(sbuf_t *sb)
+sbuf_cleanup(sbuf_t *sb)
 {
 	if (sb->buf)
 		free(sb->buf);
-	free(sb);
 }
 
 void
 sbuf_clear(sbuf_t *sb)
 {
 	sb->NUL = 0;
-}
-
-char *
-sbuf_detach(sbuf_t *sb)
-{
-	char* buf = sb->buf;
-	sbuf_init(sb);
-	return buf;
-}
-
-void
-sbuf_move(sbuf_t *src, sbuf_t *dest)
-{
-	if (dest->buf)
-		free(dest->buf);
-	dest->buf = src->buf;
-	dest->NUL = src->NUL;
-	dest->buflen = src->buflen;
-	sbuf_init(src);
+	if (sb->buf)
+		sb->buf[sb->NUL] = '\0';
 }
 
 void
@@ -129,7 +103,7 @@ sbuf_ncat(sbuf_t *sb, const char *str, size_t len)
 void
 sbuf_sprintf(sbuf_t *sb, const char *fmt, ...)
 {
-	sbuf_init(sb);
+	sbuf_clear(sb);
 
 	va_list ap;
 	va_start(ap, fmt);
