@@ -55,6 +55,7 @@ static int Transforms[LAST_HTTP_DATA] = {
 enum {
 	STATE_ACCEPT,
 	STATE_FAIL,
+	STATE_TERM,
 	STATE_TIMEOUT,
 };
 
@@ -114,6 +115,7 @@ state_version(struct state_t *state)
 			case '\n':
 				if (term)
 					return STATE_ACCEPT;
+				return STATE_FAIL;
 			default:
 				sbuf_putc(d, c);
 				term = 0;
@@ -126,24 +128,35 @@ state_version(struct state_t *state)
 int
 state_header(struct state_t *state)
 {
-	int term = 0;
+	int term1 = 0, term2 = 0;
+	int read = 0;
 	ibuf_t *b = &state->buf;
 	sbuf_t *d = &state->dest;
 	char c;
 
 	while (!ibuf_eof(b)) {
 		c = ibuf_getc(b);
+		++read;
 
 		switch (c) {
+			case '\r':
+				if (read == 1)
+					term2 = 1;
+				break;
+			case '\n':
+				if (read == 2 && term2 == 1)
+					return STATE_TERM;
+				break;
 			case ':':
-				term = 1;
+				term1 = 1;
 				break;
 			case ' ':
-				if (term)
+				if (term1)
 					return STATE_ACCEPT;
+				return STATE_FAIL;
 			default:
 				sbuf_putc(d, c);
-				term = 0;
+				term1 = 0;
 				break;
 		}
 	}
@@ -168,6 +181,7 @@ state_field(struct state_t *state)
 			case '\n':
 				if (term)
 					return STATE_ACCEPT;
+				return STATE_FAIL;
 			default:
 				sbuf_putc(d, c);
 				term = 0;
@@ -203,34 +217,18 @@ int http_parser_next(http_parser *parser, const char **buf, size_t *len)
 	state_fn *func = States[state->state];
 	int ret;
 
-	static int _die = 0;
-	if (_die == 15)
-		return 0;
-	/* check if done here */
-
 	sbuf_clear(&parser->state.dest);
-
 	ret = func(state);
-
-	if (ret == STATE_ACCEPT) {
-		ret = state->state;
-		state->state = Transforms[state->state];
-		printf("%%%%%% state: \"%s\"\n", parser->state.dest.buf);
-		++_die;
-		return ret;
-	}
-	else
-		return 0;
-
-	/*switch (ret) {
+	switch (ret) {
+		case STATE_TERM:
+			printf("%%%%%% accepted!\n");
+			return HTTP_EVT_DONE;
 		case STATE_ACCEPT:
 			ret = state->state;
 			state->state = Transforms[state->state];
+			printf("%%%%%% state: \"%s\"\n", parser->state.dest.buf);
 			return ret;
-		case STATE_TIMEOUT:
-			return HTTP_EVT_TIMEOUT;
-		case STATE_FAIL:
 		default:
 			return HTTP_EVT_ERROR;
-	}*/
+	}
 }

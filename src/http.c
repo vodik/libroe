@@ -31,7 +31,12 @@ http_on_message(conn_t *conn)
 	size_t len;
 	int code;
 
-	http_parser_init(&reader, conn, 512, 60);
+	http_parser_init(&reader, conn, 512, 2);
+
+	/* FIXME this now blocks until either its done, theres an error, or theres a timeout
+	 * this timeout should be really short and instead of failing on a timeout, return to polling
+	 * and resume on more data after a bigger timeout to avoid blocking. add a mark and sweep cleanup
+	 * every once and a while. */
 	while ((code = http_parser_next(&reader, &buf, &len)) > 0) {
 		/* use buf, len */
 	}
