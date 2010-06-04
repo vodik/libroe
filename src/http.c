@@ -84,6 +84,7 @@ http_on_message(conn_t *conn)
 			die("error");
 			break;
 	}
+
 	/* send request */
 	printf("==> QUERY REQUEST!\n");
 
@@ -99,16 +100,14 @@ http_on_message(conn_t *conn)
 	}
 	http_parser_cleanup(&reader);
 
-
 	/* on body */
 	http_response response;
-
 	http_response_init(&response, conn);
+
 	/* send */
+
 	http_response_cleanup(&response);
 
-	/* determine if keep alive */
-	//return CONN_CLOSE;
 	return 0;
 }
 

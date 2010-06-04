@@ -28,9 +28,8 @@ sbuf_extendby(sbuf_t *sb, int len)
 	if (!sb->buflen)
 		sb->buflen = 32;
 
-	if (len > sb->buflen)
-		sb->buflen = next_power(len);
-
+	sb->buflen = next_power(len);
+	printf("--- expand: %d\n", sb->buflen);
 	buf = realloc(sb->buf, sb->buflen);
 	sb->buf = buf;
 }
@@ -86,7 +85,7 @@ sbuf_cat(sbuf_t *sb, const char *str)
 void
 sbuf_putc(sbuf_t *sb, const char c)
 {
-	sbuf_extendby(sb, 1);
+	sbuf_extendby(sb, 2);
 	sb->buf[sb->NUL++] = c;
 	sb->buf[sb->NUL] = '\0';
 }
