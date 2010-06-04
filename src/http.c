@@ -15,6 +15,51 @@
 #include <parser.h>
 #include <util.h>
 
+int
+http_pull_request(http_parser *reader)
+{
+	int code;
+	const char *b;
+	size_t len;
+
+	while ((code = http_parser_next(reader, &b, &len)) > 0) {
+		switch (code) {
+			case HTTP_DATA_METHOD:
+				printf("==> METHOD: \"%s\"\n", b);
+				break;
+			case HTTP_DATA_PATH:
+				printf("==> PATH: \"%s\"\n", b);
+				break;
+			case HTTP_DATA_VERSION:
+				printf("==> VERSION: \"%s\"\n", b);
+				return HTTP_EVT_DONE;
+		}
+	}
+	return code;
+}
+
+int
+http_handle_headers(http_parser *reader)
+{
+	int code;
+	const char *b;
+	size_t len;
+
+	while ((code = http_parser_next(reader, &b, &len)) > 0) {
+		switch (code) {
+			case HTTP_DATA_HEADER:
+				printf("==> HEADER: \"%s\"\n", b);
+				break;
+			case HTTP_DATA_FIELD:
+				printf("==> FIELD: \"%s\"\n", b);
+				break;
+		}
+	}
+	return code;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 void
 http_on_open(conn_t *conn)
 {
@@ -27,19 +72,23 @@ http_on_message(conn_t *conn)
 	printf("==> HTTP MESSAGE: %d\n", conn->fd);
 
 	http_parser reader;
-	const char *buf;
-	size_t len;
 	int code;
 
 	http_parser_init(&reader, conn, 512, 2);
-
-	/* FIXME this now blocks until either its done, theres an error, or theres a timeout
-	 * this timeout should be really short and instead of failing on a timeout, return to polling
-	 * and resume on more data after a bigger timeout to avoid blocking. add a mark and sweep cleanup
-	 * every once and a while. */
-	while ((code = http_parser_next(&reader, &buf, &len)) > 0) {
-		/* use buf, len */
+	code = http_pull_request(&reader);
+	switch (code) {
+		case HTTP_EVT_TIMEOUT:
+			printf("==> TIMEOUT\n");
+			return 0;
+		case HTTP_EVT_ERROR:
+			die("error");
+			break;
 	}
+	/* send request */
+	printf("==> QUERY REQUEST!\n");
+
+	/* send headers */
+	code = http_handle_headers(&reader);
 	switch (code) {
 		case HTTP_EVT_TIMEOUT:
 			printf("==> TIMEOUT\n");
@@ -50,9 +99,6 @@ http_on_message(conn_t *conn)
 	}
 	http_parser_cleanup(&reader);
 
-	/* send request */
-
-	/* send headers */
 
 	/* on body */
 	http_response response;

@@ -215,20 +215,26 @@ int http_parser_next(http_parser *parser, const char **buf, size_t *len)
 {
 	struct state_t *state = &parser->state;
 	state_fn *func = States[state->state];
-	int ret;
+	int ret = HTTP_EVT_ERROR;
+
+	*buf = NULL;
+	*len = 0;
 
 	sbuf_clear(&parser->state.dest);
 	ret = func(state);
 	switch (ret) {
 		case STATE_TERM:
-			printf("%%%%%% accepted!\n");
-			return HTTP_EVT_DONE;
+			ret = HTTP_EVT_DONE;
+			break;
 		case STATE_ACCEPT:
 			ret = state->state;
 			state->state = Transforms[state->state];
-			printf("%%%%%% state: \"%s\"\n", parser->state.dest.buf);
-			return ret;
+			break;
 		default:
 			return HTTP_EVT_ERROR;
 	}
+
+	*buf = sbuf_raw(&parser->state.dest);
+	*len = sbuf_len(&parser->state.dest);
+	return ret;
 }

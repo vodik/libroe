@@ -15,11 +15,11 @@ typedef struct _sbuf {
     int buflen;
 } sbuf_t;
 
-#define sbuf_raw(SB) (SB->NUL ? SB->buf : NULL)
-#define sbuf_len(SB) (SB->NUL)
+#define sbuf_raw(SB) ((SB)->NUL ? (SB)->buf : NULL)
+#define sbuf_len(SB) ((SB)->NUL)
 
 /* shorthand to get a char * from an sbuf_t */
-#define _S(SB) sbuf_raw(SB)
+#define _S(SB) sbuf_raw((SB))
 
 void sbuf_init(sbuf_t *sb, size_t reserve);
 void sbuf_cleanup(sbuf_t *sb);
