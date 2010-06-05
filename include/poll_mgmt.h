@@ -11,7 +11,7 @@ enum {
 };
 
 typedef void (*onopen_cb)(conn_t *conn);
-typedef int (*onmessage_cb)(conn_t *conn);
+typedef int (*onmessage_cb)(conn_t *conn, void *data);
 typedef void (*onclose_cb)(conn_t *conn);
 
 typedef struct {
@@ -25,7 +25,7 @@ typedef struct {
 	int fd;
 	int size;
 	struct epoll_event *events;
-	void *shared;
+	/*void *shared;*/
 	skipset_t store;
 } poll_mgmt_t;
 

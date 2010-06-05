@@ -6,15 +6,23 @@
 #include <parser.h>
 #include <conn.h>
 
-typedef struct {
+typedef struct _http {
 	conn_t base;
+	int keep_alive;
+
+	const char *method;
+	const char *path;
+	const char *version;
+
+	void (*onheader)(struct _http *conn, const char *header, const char *field);
+	void (*makeresponse)(struct _http *conn);
 } http_t;
 
 ////////////////////////////////////////////////////////////////////////////////
 
 /* TODO move to a private header */
 void http_on_open(conn_t *conn);
-int http_on_message(conn_t *conn);
+int http_on_message(conn_t *conn, void *data);
 void http_on_close(conn_t *conn);
 
 static const fd_cbs_t http_callbacks = {
@@ -30,24 +38,8 @@ static const fd_cbs_t http_callbacks = {
 ////////////////////////////////////////////////////////////////////////////////
 
 typedef struct {
-	int method;
-	char *path;//, *query, *frag;
-	char *version;
-} request_data;
-
-typedef struct http_conn {
-	request_data request;
-	http_response response;
-
-	int keep_alive;
-
-	void (*onheader)(struct http_conn *conn, const char *header, const char *field);
-	void (*makeresponse)(struct http_conn *conn);
-} http_conn;
-
-struct http_iface {
 	int port;
-	void (*onrequest)(http_conn *conn);
-};
+	void (*onrequest)(http_t *conn);
+} http_iface_t;
 
 #endif

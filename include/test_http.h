@@ -4,7 +4,7 @@
 #include <http.h>
 #include <websocket.h>
 
-void test_onrequest(http_conn *conn);
+void test_onrequest(http_t *conn);
 void ws_onrequest(ws_t *ws);
 
 #endif

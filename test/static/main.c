@@ -18,12 +18,12 @@
 
 #include <response.h>
 
-struct http_iface test_iface = {
+http_iface_t test_iface = {
 	.port = 11234,
 	.onrequest = test_onrequest,
 };
 
-struct ws_iface ws_iface = {
+ws_iface_t ws_iface = {
 	.port = 33456,
 	.onopen = NULL,
 };

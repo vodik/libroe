@@ -16,7 +16,7 @@
 #include <util.h>
 
 int
-http_pull_request(http_parser *reader)
+http_pull_request(http_iface_t *iface, http_t *conn, http_parser *reader)
 {
 	int code;
 	const char *b;
@@ -26,12 +26,21 @@ http_pull_request(http_parser *reader)
 		switch (code) {
 			case HTTP_DATA_METHOD:
 				printf("==> METHOD: \"%s\"\n", b);
+				conn->method = strndup(b, len);
 				break;
 			case HTTP_DATA_PATH:
 				printf("==> PATH: \"%s\"\n", b);
+				conn->path = strndup(b, len);
 				break;
 			case HTTP_DATA_VERSION:
 				printf("==> VERSION: \"%s\"\n", b);
+				conn->version = strndup(b, len);
+
+				/* handle request */
+				assert(iface);
+				if (iface && iface->onrequest)
+					iface->onrequest(conn);
+
 				return HTTP_EVT_DONE;
 		}
 	}
@@ -39,19 +48,28 @@ http_pull_request(http_parser *reader)
 }
 
 int
-http_handle_headers(http_parser *reader)
+http_handle_headers(http_t *conn, http_parser *reader)
 {
 	int code;
 	const char *b;
 	size_t len;
 
+	static char *header = NULL;
+
 	while ((code = http_parser_next(reader, &b, &len)) > 0) {
 		switch (code) {
 			case HTTP_DATA_HEADER:
 				printf("==> HEADER: \"%s\"\n", b);
+				header = strndup(b, len);
 				break;
 			case HTTP_DATA_FIELD:
 				printf("==> FIELD: \"%s\"\n", b);
+
+				/* handle headers */
+				if (conn && conn->onheader)
+					conn->onheader(conn, header, b);
+
+				free(header);
 				break;
 		}
 	}
@@ -67,15 +85,16 @@ http_on_open(conn_t *conn)
 }
 
 int
-http_on_message(conn_t *conn)
+http_on_message(conn_t *conn, void *data)
 {
 	printf("==> HTTP MESSAGE: %d\n", conn->fd);
+	http_t *httpc = (http_t *)conn;
 
 	http_parser reader;
 	int code;
 
 	http_parser_init(&reader, conn, 512, 2);
-	code = http_pull_request(&reader);
+	code = http_pull_request(data, httpc, &reader);
 	switch (code) {
 		case HTTP_EVT_TIMEOUT:
 			printf("==> TIMEOUT\n");
@@ -89,7 +108,7 @@ http_on_message(conn_t *conn)
 	printf("==> QUERY REQUEST!\n");
 
 	/* send headers */
-	code = http_handle_headers(&reader);
+	code = http_handle_headers(httpc, &reader);
 	switch (code) {
 		case HTTP_EVT_TIMEOUT:
 			printf("==> TIMEOUT\n");

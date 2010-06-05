@@ -17,7 +17,7 @@ typedef struct _ws {
 
 /* TODO move to a private header */
 void ws_on_open(conn_t *conn);
-int ws_on_message(conn_t *conn);
+int ws_on_message(conn_t *conn, void *data);
 void ws_on_close(conn_t *conn);
 
 static const fd_cbs_t ws_callbacks = {
@@ -29,10 +29,10 @@ static const fd_cbs_t ws_callbacks = {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-struct ws_iface {
+typedef struct {
 	int port;
 	void (*onopen)(ws_t *ws);
-};
+} ws_iface_t;
 
 void ws_init(ws_t *ws);
 void ws_free(ws_t *ws);

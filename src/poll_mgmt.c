@@ -20,6 +20,7 @@ struct fd_evt_t {
 	int type;
 	const fd_cbs_t *cbs;
 	conn_t *conn;
+	void *shared;
 };
 
 /* FIXME: tie all connections to the service */
@@ -94,7 +95,7 @@ poll_mgmt_mkstore(poll_mgmt_t *mngr, int fd, int type, const fd_cbs_t *cbs, void
 	data->fd = fd;
 	data->type = type;
 	data->cbs = cbs;
-	/*data->shared = shared;*/
+	data->shared = shared;
 
 	/* we don't want a connection data type for listening connections <- FIXME: we do want service_conn_t */
 	data->conn = type != CONN_LISTENING ? conn_new(cbs->conn_size, fd) : NULL;
@@ -135,8 +136,7 @@ poll_mgmt_accept(poll_mgmt_t *mngr, struct fd_evt_t *data)
 	printf("--> accept\n");
 	socket_set_nonblock(fd);
 
-	//struct fd_evt_t *newdata = poll_mgmt_mkstore(mngr, fd, CONN_CONNECTION, data->cbs, data->shared);
-	struct fd_evt_t *newdata = poll_mgmt_mkstore(mngr, fd, CONN_CONNECTION, data->cbs, NULL); /* FIXME */
+	struct fd_evt_t *newdata = poll_mgmt_mkstore(mngr, fd, CONN_CONNECTION, data->cbs, data->shared);
 	if (newdata->cbs && newdata->cbs->onopen)
 		newdata->cbs->onopen(newdata->conn);
 
@@ -161,7 +161,7 @@ poll_mgmt_handle(poll_mgmt_t *mngr, struct fd_evt_t *data)
 	printf("--> handling\n");
 
 	if (data->cbs && data->cbs->onmessage)
-		keepalive = data->cbs->onmessage(data->conn);
+		keepalive = data->cbs->onmessage(data->conn, data->shared);
 
 	/* TODO: move this into its own function */
 	if (!keepalive) {
