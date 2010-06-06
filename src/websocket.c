@@ -23,7 +23,7 @@ ws_on_open(conn_t *conn)
 }
 
 int
-ws_on_message(conn_t *conn)
+ws_on_message(conn_t *conn, void *data)
 {
 	http_parser reader;
 	const char *buf;
