@@ -10,9 +10,9 @@ typedef struct _http {
 	conn_t base;
 	int keep_alive;
 
-	const char *method;
-	const char *path;
-	const char *version;
+	char *method;
+	char *path;
+	char *version;
 
 	void (*onheader)(struct _http *conn, const char *header, const char *field);
 	void (*makeresponse)(struct _http *conn);
@@ -25,14 +25,15 @@ void http_on_open(conn_t *conn);
 int http_on_message(conn_t *conn, void *data);
 void http_on_close(conn_t *conn);
 
+void http_destroy(void *conn);
+
 static const fd_cbs_t http_callbacks = {
-	.conn_size  = sizeof(http_t),
-	/* .data    = <-- FIXME
-	 * .oninit  =
-	 */
-	.onopen		= http_on_open,
-	.onmessage	= http_on_message,
-	.onclose	= http_on_close,
+	.conn_size    = sizeof(http_t),
+	.conn_destroy = http_destroy,
+
+	.onopen       = http_on_open,
+	.onmessage    = http_on_message,
+	.onclose      = http_on_close,
 };
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -135,3 +135,13 @@ http_on_close(conn_t *conn)
 {
 	printf("==> HTTP CLOSE: %d\n", conn->fd);
 }
+
+void
+http_destroy(void *conn)
+{
+	printf("==> HTTP CLEANUP\n");
+	http_t *hconn = (http_t *)conn;
+	free(hconn->method);
+	free(hconn->path);
+	free(hconn->version);
+}

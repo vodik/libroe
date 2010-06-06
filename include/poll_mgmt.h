@@ -16,6 +16,8 @@ typedef void (*onclose_cb)(conn_t *conn);
 
 typedef struct {
 	size_t conn_size;
+	destroy_cb conn_destroy;
+
 	onopen_cb onopen;
 	onmessage_cb onmessage;
 	onclose_cb onclose;
@@ -25,7 +27,6 @@ typedef struct {
 	int fd;
 	int size;
 	struct epoll_event *events;
-	/*void *shared;*/
 	skipset_t store;
 } poll_mgmt_t;
 

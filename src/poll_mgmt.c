@@ -98,7 +98,7 @@ poll_mgmt_mkstore(poll_mgmt_t *mngr, int fd, int type, const fd_cbs_t *cbs, void
 	data->shared = shared;
 
 	/* we don't want a connection data type for listening connections <- FIXME: we do want service_conn_t */
-	data->conn = type != CONN_LISTENING ? conn_new(cbs->conn_size, fd) : NULL;
+	data->conn = type != CONN_LISTENING ? conn_new(cbs->conn_size, fd, cbs->conn_destroy) : NULL;
 
 	skipset_add(&mngr->store, fd, data);
 	return data;
