@@ -67,7 +67,7 @@ fd_cleanup(void *arg)
 	if (data->type != CONN_LISTENING) {
 		if (data->cbs && data->cbs->onclose)
 			data->cbs->onclose(data->conn);
-		conn_unref(data->conn);
+		conn_close(data->conn);
 	}
 
 	close(data->fd);
@@ -173,7 +173,7 @@ poll_mgmt_handle(poll_mgmt_t *mngr, struct fd_evt_t *data)
 			die("%d: epoll_ctl failed to remove connection\n", __LINE__);
 
 		if (data->conn)
-			conn_unref(data->conn);
+			conn_close(data->conn);
 
 		close(data->fd);
 		poll_mgmt_removestore(mngr, data->fd);

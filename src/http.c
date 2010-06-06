@@ -121,7 +121,7 @@ http_on_message(conn_t *conn, void *data)
 
 	/* on body */
 	http_response response;
-	http_response_init(&response, conn);
+	http_response_init(&response, conn, 200);
 
 	/* send */
 
