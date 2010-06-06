@@ -16,16 +16,16 @@ static_serve(http_t *conn)
 	printf("--> sending file\n");
 	fd = open(conn->path + 1, O_RDONLY); /* paths start with / */
 	if (fd == -1) {
-		http_response_error(&conn->response, 404, "Not Found");
+		//http_response_error(&conn->response, 404, "Not Found");
 		return;
 	}
 
 	filesize = lseek(fd, 0, SEEK_END);
 	map = mmap(0, filesize, PROT_READ, MAP_SHARED, fd, 0);
 
-	http_response_begin(&conn->response, TRANSFER_ENCODING_NONE, 200, "OK", "text/html", filesize);
-	http_response_write(&conn->response, map, filesize);
-	http_response_end(&conn->response);
+	//http_response_begin(&conn->response, TRANSFER_ENCODING_NONE, 200, "OK", "text/html", filesize);
+	//http_response_write(&conn->response, map, filesize);
+	//http_response_end(&conn->response);
 	printf("--> sent\n");
 
 	munmap(map, filesize);
