@@ -5,14 +5,21 @@
 #include <response.h>
 #include <parser.h>
 #include <conn.h>
+#include <hashtable.h>
+
+typedef struct {
+	char *method;
+	char *path;
+	char *version;
+	hashtable_t headers;
+} request_t;
 
 typedef struct _http {
 	conn_t base;
 	int keep_alive;
 
-	char *method;
-	char *path;
-	char *version;
+	request_t request;
+	response_t response;
 
 	void (*onheader)(struct _http *conn, const char *header, const char *field);
 	void (*makeresponse)(struct _http *conn);

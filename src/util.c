@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <errno.h>
+#include <math.h>
 
 void
 die(const char *err, ...)
@@ -16,4 +17,33 @@ die(const char *err, ...)
 	vfprintf(stderr, err, args);
 	va_end(args);
 	exit(EXIT_FAILURE);
+}
+
+int
+itoa(int n, char s[], size_t len, int radix)
+{
+	int i, t, sign;
+	int digits;
+
+	if (radix > 36)
+		return 0;
+
+	digits = (int)(log(n)/log(radix)) + 1;
+	if (digits > len)
+		return 0;
+	i = digits - 1;
+
+	if ((sign = n) < 0)
+		n = -n;
+
+	do {
+		t = n % radix;
+		s[i--] = t + (t > 9 ? 'a' - 10 : '0');
+	} while ((n /= radix) > 0);
+
+	if (sign < 0)
+		s[i--] = '-';
+
+	s[digits] = '\0';
+	return digits;
 }

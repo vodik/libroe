@@ -41,3 +41,9 @@ conn_close(conn_t *c)
 		free(c);
 	}
 }
+
+size_t
+conn_write(conn_t *c, const char *msg, size_t bytes)
+{
+	return write(c->fd, msg, bytes);
+}

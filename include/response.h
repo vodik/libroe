@@ -4,21 +4,22 @@
 #include <stddef.h>
 #include <conn.h>
 #include <obuf.h>
-
-enum {
-	TRANSFER_ENCODING_NONE = 0,
-	TRANSFER_ENCODING_CHUNKED
-};
+#include <hashtable.h>
 
 typedef struct {
-	/*obuf_t buf;*/
-	int reserve;
-} http_response;
+	conn_t *conn;
+	int wrote_headers;
 
-void http_response_init(http_response *response, conn_t *conn, int code);
-void http_response_cleanup(http_response *response);
+	int code;
+	char *message;
+	hashtable_t headers;
+} response_t;
 
-void http_response_set_header(http_response *response, const char *header, const char *field);
-void http_response_write(http_response *response, const char *buf, size_t len);
+void response_init(response_t *response, conn_t *conn);
+void response_cleanup(response_t *response);
+
+void response_header_set(response_t *response, int code, const char *message);
+void response_header_add(response_t *response, const char *header, const char *field);
+void response_write(response_t *response, const char *buf, size_t len);
 
 #endif

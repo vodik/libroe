@@ -13,62 +13,38 @@
 #include <assert.h>
 
 #include <parser.h>
+#include <response.h>
 #include <util.h>
 
 int
-http_pull_request(http_iface_t *iface, http_t *conn, http_parser *reader)
+http_pull_request(http_t *conn, http_parser *reader)
 {
 	int code;
 	const char *b;
 	size_t len;
+	char *header;
 
 	while ((code = http_parser_next(reader, &b, &len)) > 0) {
 		switch (code) {
 			case HTTP_DATA_METHOD:
 				printf("==> METHOD: \"%s\"\n", b);
-				conn->method = strndup(b, len);
+				conn->request.method = strndup(b, len);
 				break;
 			case HTTP_DATA_PATH:
 				printf("==> PATH: \"%s\"\n", b);
-				conn->path = strndup(b, len);
+				conn->request.path = strndup(b, len);
 				break;
 			case HTTP_DATA_VERSION:
 				printf("==> VERSION: \"%s\"\n", b);
-				conn->version = strndup(b, len);
-
-				/* handle request */
-				assert(iface);
-				if (iface && iface->onrequest)
-					iface->onrequest(conn);
-
-				return HTTP_EVT_DONE;
-		}
-	}
-	return code;
-}
-
-int
-http_handle_headers(http_t *conn, http_parser *reader)
-{
-	int code;
-	const char *b;
-	size_t len;
-
-	static char *header = NULL;
-
-	while ((code = http_parser_next(reader, &b, &len)) > 0) {
-		switch (code) {
+				conn->request.version = strndup(b, len);
+				return 0;
 			case HTTP_DATA_HEADER:
 				printf("==> HEADER: \"%s\"\n", b);
 				header = strndup(b, len);
 				break;
 			case HTTP_DATA_FIELD:
 				printf("==> FIELD: \"%s\"\n", b);
-
-				/* handle headers */
-				if (conn && conn->onheader)
-					conn->onheader(conn, header, b);
-
+				hashtable_add(&conn->request.headers, header, strndup(b, len));
 				free(header);
 				break;
 		}
@@ -88,13 +64,17 @@ int
 http_on_message(conn_t *conn, void *data)
 {
 	printf("==> HTTP MESSAGE: %d\n", conn->fd);
+
 	http_t *httpc = (http_t *)conn;
+	http_iface_t *iface = (http_iface_t *)data;
 
 	http_parser reader;
 	int code;
 
+	hashtable_init(&httpc->request.headers, 16, NULL);
+
 	http_parser_init(&reader, conn, 512, 2);
-	code = http_pull_request(data, httpc, &reader);
+	code = http_pull_request(httpc, &reader);
 	switch (code) {
 		case HTTP_EVT_TIMEOUT:
 			printf("==> TIMEOUT\n");
@@ -104,29 +84,13 @@ http_on_message(conn_t *conn, void *data)
 			break;
 	}
 
-	/* send request */
+	response_init(&httpc->response, conn);
 	printf("==> QUERY REQUEST!\n");
+	if (iface && iface->onrequest)
+		iface->onrequest(httpc);
 
-	/* send headers */
-	code = http_handle_headers(httpc, &reader);
-	switch (code) {
-		case HTTP_EVT_TIMEOUT:
-			printf("==> TIMEOUT\n");
-			return 0;
-		case HTTP_EVT_ERROR:
-			die("error");
-			break;
-	}
+	response_cleanup(&httpc->response);
 	http_parser_cleanup(&reader);
-
-	/* on body */
-	http_response response;
-	http_response_init(&response, conn, 200);
-
-	/* send */
-
-	http_response_cleanup(&response);
-
 	return 0;
 }
 
@@ -141,7 +105,9 @@ http_destroy(void *conn)
 {
 	printf("==> HTTP CLEANUP\n");
 	http_t *hconn = (http_t *)conn;
-	free(hconn->method);
-	free(hconn->path);
-	free(hconn->version);
+
+	free(hconn->request.method);
+	free(hconn->request.path);
+	free(hconn->request.version);
+	hashtable_cleanup(&hconn->request.headers, free);
 }

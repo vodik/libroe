@@ -100,17 +100,6 @@ sbuf_ncat(sbuf_t *sb, const char *str, size_t len)
 }
 
 void
-sbuf_sprintf(sbuf_t *sb, const char *fmt, ...)
-{
-	sbuf_clear(sb);
-
-	va_list ap;
-	va_start(ap, fmt);
-	sbuf_vprintf(sb, fmt, ap);
-	va_end(ap);
-}
-
-void
 sbuf_scatf(sbuf_t *sb, const char *fmt, ...)
 {
 	va_list ap;
