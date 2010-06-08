@@ -80,7 +80,7 @@ response_write_header(response_t *response)
 	sbuf_scatf(&header, template, response->code, response->message);
 	sbuf_cat(&header, "\r\n");
 
-	conn_write(response->conn, sbuf_raw(&header), sbuf_len(&header));
+	write(response->conn->fd, sbuf_raw(&header), sbuf_len(&header));
 	sbuf_cleanup(&header);
 }
 
@@ -128,5 +128,5 @@ response_write(response_t *response, const char *buf, size_t len)
 		response->wrote_headers = 1;
 	}
 
-	conn_write(response->conn, buf, len);
+	write(response->conn->fd, buf, len);
 }

@@ -6,7 +6,7 @@
 #include <unistd.h>
 
 conn_t *
-conn_new(size_t size, int fd, destroy_cb destroy)
+conn_new(size_t size, int fd, write_cb write, destroy_cb destroy)
 {
 	assert(size >= sizeof(conn_t));
 
@@ -14,6 +14,7 @@ conn_new(size_t size, int fd, destroy_cb destroy)
 	if (c) {
 		c->fd = fd;
 		c->ref = 1;
+		c->write = write;
 		c->destroy = destroy;
 	}
 	return c;
@@ -45,5 +46,5 @@ conn_close(conn_t *c)
 size_t
 conn_write(conn_t *c, const char *msg, size_t bytes)
 {
-	return write(c->fd, msg, bytes);
+	return c->write(c, msg, bytes);
 }

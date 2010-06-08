@@ -3,15 +3,21 @@
 
 #include <stddef.h>
 
-typedef void (*destroy_cb)(void *data);
+typedef struct _conn conn_t;
 
-typedef struct {
+typedef void (*destroy_cb)(struct _conn *c);
+typedef size_t (*write_cb)(struct _conn *c, const char *msg, size_t nbytes);
+
+struct _conn {
 	int fd;
 	int ref;
-	destroy_cb destroy;
-} conn_t;
 
-conn_t *conn_new(size_t size, int fd, destroy_cb destroy);
+	/* interface */
+	write_cb write;
+	destroy_cb destroy;
+};
+
+conn_t *conn_new(size_t size, int fd, write_cb write, destroy_cb destroy);
 conn_t *conn_ref(conn_t *c);
 void conn_close(conn_t *c);
 

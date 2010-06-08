@@ -17,6 +17,7 @@ typedef void (*onclose_cb)(conn_t *conn);
 typedef struct {
 	size_t conn_size;
 	destroy_cb conn_destroy;
+	write_cb conn_write;
 
 	onopen_cb onopen;
 	onmessage_cb onmessage;

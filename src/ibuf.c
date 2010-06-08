@@ -6,14 +6,14 @@
 void
 ibuf_pull(ibuf_t *b)
 {
-	fprintf(stderr, "--- pulling\n");
+	printf("--- pulling\n");
 	ssize_t r = b->cb(b->dat, b->buf, b->size);
 	if (r < 0)
 		b->err = BUF_ERR;
 	else if (r == 0)
 		b->err = BUF_EOF;
 	else {
-		fprintf(stderr, "--- ok:%d\n", r);
+		printf("--- ok:%d\n", r);
 		b->eob = r;
 		b->i = 0;
 	}

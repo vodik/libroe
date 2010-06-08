@@ -37,7 +37,7 @@ http_pull_request(http_t *conn, http_parser *reader)
 			case HTTP_DATA_VERSION:
 				printf("==> VERSION: \"%s\"\n", b);
 				conn->request.version = strndup(b, len);
-				return 0;
+				break;
 			case HTTP_DATA_HEADER:
 				printf("==> HEADER: \"%s\"\n", b);
 				header = strndup(b, len);
@@ -93,7 +93,7 @@ http_on_message(conn_t *conn, void *data)
 	response_init(&httpc->response, conn);
 	printf("==> QUERY REQUEST!\n");
 	if (iface && iface->onrequest)
-		iface->onrequest(httpc);
+		iface->onrequest(httpc, &httpc->request, &httpc->response);
 
 	response_cleanup(&httpc->response);
 	http_parser_cleanup(&reader);
@@ -107,7 +107,7 @@ http_on_close(conn_t *conn)
 }
 
 void
-http_destroy(void *conn)
+http_destroy(conn_t *conn)
 {
 	printf("==> HTTP CLEANUP\n");
 	http_t *hconn = (http_t *)conn;
@@ -116,4 +116,13 @@ http_destroy(void *conn)
 	free(hconn->request.path);
 	free(hconn->request.version);
 	hashtable_cleanup(&hconn->request.headers, free);
+}
+
+size_t
+http_write(conn_t *conn, const char *msg, size_t nbytes)
+{
+	http_t *hconn = (http_t *)conn;
+
+	response_write(&hconn->response, msg, nbytes);
+	return 0;
 }

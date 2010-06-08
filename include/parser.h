@@ -4,7 +4,6 @@
 #include <stddef.h>
 #include <sys/time.h>
 #include <conn.h>
-
 #include <ibuf.h>
 #include <sbuf.h>
 

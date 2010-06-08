@@ -3,7 +3,6 @@
 
 #include <stddef.h>
 #include <conn.h>
-#include <obuf.h>
 #include <hashtable.h>
 
 typedef struct {
