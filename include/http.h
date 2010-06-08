@@ -20,9 +20,6 @@ typedef struct _http {
 
 	request_t request;
 	response_t response;
-
-	void (*onheader)(struct _http *conn, const char *header, const char *field);
-	void (*makeresponse)(struct _http *conn);
 } http_t;
 
 ////////////////////////////////////////////////////////////////////////////////
