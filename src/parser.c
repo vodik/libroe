@@ -194,7 +194,7 @@ state_field(struct state_t *state)
 ////////////////////////////////////////////////////////////////////////////////
 
 void
-http_parser_init(http_parser *parser, conn_t *conn, size_t size, int timeout)
+parser_init(parser_t *parser, conn_t *conn, size_t size, int timeout)
 {
 	parser->state.state = HTTP_DATA_METHOD;
 	parser->store.fd = conn->fd;
@@ -205,13 +205,13 @@ http_parser_init(http_parser *parser, conn_t *conn, size_t size, int timeout)
 	sbuf_init(&parser->state.dest, 0);
 }
 
-void http_parser_cleanup(http_parser *parser)
+void parser_cleanup(parser_t *parser)
 {
 	ibuf_cleanup(&parser->state.buf);
 	sbuf_cleanup(&parser->state.dest);
 }
 
-int http_parser_next(http_parser *parser, const char **buf, size_t *len)
+int parser_next(parser_t *parser, const char **buf, size_t *len)
 {
 	struct state_t *state = &parser->state;
 	state_fn *func = States[state->state];

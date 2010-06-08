@@ -16,72 +16,100 @@
 #include <parser.h>
 #include <util.h>
 
+/* FIXME: generalize this because I just copied this over from
+ * http_pull_request */
+int
+ws_pull_request(ws_t *conn, parser_t *parser)
+{
+	int code;
+	const char *b;
+	size_t len;
+	static char *header;
+
+	while ((code = parser_next(parser, &b, &len)) > 0) {
+		switch (code) {
+			case HTTP_DATA_METHOD:
+				printf("==> METHOD: \"%s\"\n", b);
+				conn->request.method = strndup(b, len);
+				break;
+			case HTTP_DATA_PATH:
+				printf("==> PATH: \"%s\"\n", b);
+				conn->request.path = strndup(b, len);
+				break;
+			case HTTP_DATA_VERSION:
+				printf("==> VERSION: \"%s\"\n", b);
+				conn->request.version = strndup(b, len);
+				break;
+			case HTTP_DATA_HEADER:
+				printf("==> HEADER: \"%s\"\n", b);
+				header = strndup(b, len);
+				break;
+			case HTTP_DATA_FIELD:
+				printf("==> FIELD: \"%s\"\n", b);
+				hashtable_add(&conn->request.headers, header, strndup(b, len));
+				free(header);
+				break;
+		}
+	}
+	return code;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 void
 ws_on_open(conn_t *conn)
 {
-	printf("--> opening\n");
+	printf("==> WS START: %d\n", conn->fd);
 }
 
 int
 ws_on_message(conn_t *conn, void *data)
 {
-	http_parser reader;
-	const char *buf;
-	size_t len;
+	printf("==> WS MESSAGE: %d\n", conn->fd);
+
+	ws_t *wsc = (ws_t *)conn;
+	ws_iface_t *iface = (ws_iface_t *)data;
+
+	parser_t parser;
 	int code;
 
-	http_parser_init(&reader, conn, 2048, 2);
-	while ((code = http_parser_next(&reader, &buf, &len)) > 0) {
-		/* use buf, len */
-	}
+	hashtable_init(&wsc->request.headers, 16, NULL);
+
+	parser_init(&parser, conn, 512, 2);
+	code = ws_pull_request(wsc, &parser);
 	switch (code) {
 		case HTTP_EVT_TIMEOUT:
+			printf("==> TIMEOUT\n");
 			return 0;
-		default:
+		case HTTP_EVT_ERROR:
 			die("error");
+			break;
 	}
-	http_parser_cleanup(&reader);
 
+	/* handle headers here
+	 * char *vale = hashtable_get("Connection");
+	 * if (strcmp(value, "Close"))
+	 * 		..
+	 */
+
+	response_init(&wsc->response, conn);
+	printf("==> QUERY REQUEST!\n");
+	if (iface && iface->onrequest)
+		iface->onrequest(wsc, &wsc->request, &wsc->response);
+
+	response_cleanup(&wsc->response);
+	parser_cleanup(&parser);
 	return 1;
 }
 
 void
 ws_on_close(conn_t *conn)
 {
+	printf("==> WS CLOSE: %d\n", conn->fd);
 }
 
 /**********************************************************/
-//struct ws_context_t {
-	//http_parser parser;
-	//ws_t ws;
-//
-	//int auth;
-	//int expected_event; /* FIXME: this should be in the parser itself, this is a kudge */
-	//sbuf_t *method, *version;
-	//sbuf_t *field, *header;
-//
-	//sbuf_t *response;
-//};
-//
-//const char message[] =
-	//"HTTP/1.1 101 Web Socket Protocol Handshake\r\n"
-	//"Upgrade: WebSocket\r\n"
-	//"Connection: Upgrade\r\n";
-	///*"WebSocket-Origin: http://localhost:11234\r\n"
-	//"WebSocket-Location: ws://localhost:33456/service\r\n"*/
-//
-//void
-//ws_on_open(struct fd_context_t *context)
-//{
-	//struct ws_context_t *ws_context = malloc(sizeof(struct ws_context_t));
-	//http_parser_init(&ws_context->parser);
-//
-	//ws_context->ws.fd = context->fd;
-//
-	//context->data = ws_context;
-	//context->context_gc = free; /* FIXME: no long adequate */
-//}
-//
+
 //void
 //ws_handle_headers(const char *header, const char *field)
 //{
@@ -116,93 +144,7 @@ ws_on_close(conn_t *conn)
 		//die("websocket acknowledge failed\n");
 	//return 0;
 //}
-//
-//int
-//ws_on_message(struct fd_context_t *context, const char *msg, size_t nbytes)
-//{
-	//static char buf[1024];
-	//event_data_t data;
-	//int read = 0;
-//
-	//struct ws_context_t *ws_context = context->data;
-	//http_parser *parser = &ws_context->parser;
-	//ws_t *ws = &ws_context->ws;
-//
-	//struct ws_iface *iface = context->shared;
-//
-	//if (!iface->onopen)
-		//return CONN_CLOSE;
-//
-	//http_parser_set_buffer(parser, msg, nbytes);
-//
-	//if (!ws_context->auth) {
-		//switch (ws_context->expected_event) {
-			//case HTTP_DATA_METHOD:
-				//read = http_parser_next_event(parser, buf, 1024, &data);
-				//buf[read] = '\0';
-				//assert(data.type == HTTP_DATA_METHOD);
-				//ws_context->expected_event = HTTP_DATA_PATH;
-//
-				//sbuf_ncat(ws_context->method, buf, read);
-//
-				//if (sbuf_cmp(ws_context->method, "GET") != 0) {
-					//fprintf(stderr, "--- WEBSOCKET CAN ONLY GET\n");
-					//return CONN_CLOSE;
-				//}
-//
-			//case HTTP_DATA_PATH:
-				//read = http_parser_next_event(parser, buf, 1024, &data);
-				//assert(data.type == HTTP_DATA_PATH);
-				//ws_context->expected_event = HTTP_DATA_VERSION;
-//
-				//sbuf_ncat(ws->path, buf, read);
-//
-			//case HTTP_DATA_VERSION:
-				//read = http_parser_next_event(parser, buf, 1024, &data);
-				//assert(data.type == HTTP_DATA_VERSION);
-				//ws_context->expected_event = HTTP_DATA_HEADER;
-//
-				///* use version info? */
-				//sbuf_ncat(ws_context->version, buf, read);
-//
-			//case HTTP_DATA_HEADER:
-				//read = http_parser_next_event(parser, buf, 1024, &data);
-				//assert(data.type == HTTP_DATA_HEADER);
-				//ws_context->expected_event = HTTP_DATA_FIELD;
-//
-				//sbuf_ncat(ws_context->header, buf, read);
-//
-			//case HTTP_DATA_FIELD:
-				//read = http_parser_next_event(parser, buf, 1024, &data);
-				//assert(data.type == HTTP_DATA_FIELD);
-				//ws_context->expected_event = HTTP_DATA_HEADER;
-//
-				//sbuf_ncat(ws_context->field, buf, read);
-//
-				///* TODO: handle header/value pairs */
-				//ws_handle_headers(_S(ws_context->header), _S(ws_context->field));
-//
-				//sbuf_clear(ws_context->header);
-				//sbuf_clear(ws_context->field);
-//
-			//case HTTP_EVT_HEADER_DONE:
-				///* fir off header now */
-				//ws_acknowledge(ws);
-		//}
-	//} else if (ws->onmessage)
-		///* We got an incomming message and a function to handle it */
-		//ws->onmessage(ws, msg, nbytes);
-//
-	///* Websocket is to be kept alive until its EXPLICITLY closed */
-	//return CONN_KEEP_ALIVE;
-//}
-//
-//void
-////ws_on_close(struct fd_context_t *context)
-//{
-	//printf(">>> on close!\n");
-//}
-//
+
 ///******************************************************************************/
 
 void
@@ -212,16 +154,19 @@ ws_close(ws_t *ws)
 }
 
 size_t
-ws_send(ws_t *ws, const char *buf, size_t nbytes)
+ws_write(conn_t *conn, const char *buf, size_t nbytes)
 {
+	ws_t *wsconn = (ws_t *)conn;
+
 	char _buf[nbytes + 2];
 	char *b = _buf;
 	int i;
 
+	/* Websocket messages start with 0x00 and end with 0xff */
 	*b++ = 0x00;
 	for (i = 0; i < nbytes; ++i)
 		*b++ = *buf++;
 	*b = (char)0xff;
 
-	return write(ws->base.fd, _buf, nbytes + 2);
+	return write(wsconn->base.fd, _buf, nbytes + 2);
 }

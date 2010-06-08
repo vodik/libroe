@@ -17,14 +17,14 @@
 #include <util.h>
 
 int
-http_pull_request(http_t *conn, http_parser *reader)
+http_pull_request(http_t *conn, parser_t *parser)
 {
 	int code;
 	const char *b;
 	size_t len;
-	char *header;
+	static char *header;
 
-	while ((code = http_parser_next(reader, &b, &len)) > 0) {
+	while ((code = parser_next(parser, &b, &len)) > 0) {
 		switch (code) {
 			case HTTP_DATA_METHOD:
 				printf("==> METHOD: \"%s\"\n", b);
@@ -68,13 +68,13 @@ http_on_message(conn_t *conn, void *data)
 	http_t *httpc = (http_t *)conn;
 	http_iface_t *iface = (http_iface_t *)data;
 
-	http_parser reader;
+	parser_t parser;
 	int code;
 
 	hashtable_init(&httpc->request.headers, 16, NULL);
 
-	http_parser_init(&reader, conn, 512, 2);
-	code = http_pull_request(httpc, &reader);
+	parser_init(&parser, conn, 512, 2);
+	code = http_pull_request(httpc, &parser);
 	switch (code) {
 		case HTTP_EVT_TIMEOUT:
 			printf("==> TIMEOUT\n");
@@ -96,7 +96,7 @@ http_on_message(conn_t *conn, void *data)
 		iface->onrequest(httpc, &httpc->request, &httpc->response);
 
 	response_cleanup(&httpc->response);
-	http_parser_cleanup(&reader);
+	parser_cleanup(&parser);
 	return 0;
 }
 

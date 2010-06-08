@@ -7,7 +7,7 @@
 #include <ibuf.h>
 #include <sbuf.h>
 
-enum http_methods {
+enum methods {
 	HTTP_METHOD_DELETE,
 	HTTP_METHOD_GET,
 	HTTP_METHOD_HEAD,
@@ -31,7 +31,7 @@ enum http_methods {
 	LAST_HTTP_METHOD,
 };
 
-enum http_parser_evt {
+enum parser_evt {
 	HTTP_EVT_DONE,
 
 	HTTP_DATA_METHOD,
@@ -59,13 +59,13 @@ struct state_t {
 	int state;
 };
 
-typedef struct http_parser {
+typedef struct _parser {
 	struct state_t state;
 	struct ibuf_store store;
-} http_parser;
+} parser_t;
 
-void http_parser_init(http_parser *parser, conn_t *conn, size_t size, int timeout);
-void http_parser_cleanup(http_parser *parser);
-int http_parser_next(http_parser *parser, const char **buf, size_t *len);
+void parser_init(parser_t *parser, conn_t *conn, size_t size, int timeout);
+void parser_cleanup(parser_t *parser);
+int parser_next(parser_t *parser, const char **buf, size_t *len);
 
 #endif
