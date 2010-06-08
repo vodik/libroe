@@ -34,6 +34,44 @@ find_service(const char *name)
 ////////////////////////////////////////////////////////////////////////////////
 
 int
+pull_request(request_t *request, parser_t *parser)
+{
+	int code;
+	const char *b;
+	size_t len;
+	static char *header;
+
+	while ((code = parser_next(parser, &b, &len)) > 0) {
+		switch (code) {
+			case HTTP_DATA_METHOD:
+				printf("==> METHOD: \"%s\"\n", b);
+				request->method = strndup(b, len);
+				break;
+			case HTTP_DATA_PATH:
+				printf("==> PATH: \"%s\"\n", b);
+				request->path = strndup(b, len);
+				break;
+			case HTTP_DATA_VERSION:
+				printf("==> VERSION: \"%s\"\n", b);
+				request->version = strndup(b, len);
+				break;
+			case HTTP_DATA_HEADER:
+				printf("==> HEADER: \"%s\"\n", b);
+				header = strndup(b, len);
+				break;
+			case HTTP_DATA_FIELD:
+				printf("==> FIELD: \"%s\"\n", b);
+				hashtable_add(&request->headers, header, strndup(b, len));
+				free(header);
+				break;
+		}
+	}
+	return code;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+int
 service_start(service_t *service, const char *name, poll_mgmt_t *mgmt, int port, void *iface)
 {
 	const srv_descpt_t *srv_desc = find_service(name);

@@ -25,7 +25,7 @@ http_iface_t test_iface = {
 
 ws_iface_t ws_iface = {
 	.port = 33456,
-	.onopen = NULL,
+	.onopen = ws_onopen,
 };
 
 int

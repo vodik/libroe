@@ -16,44 +16,6 @@
 #include <response.h>
 #include <util.h>
 
-int
-http_pull_request(http_t *conn, parser_t *parser)
-{
-	int code;
-	const char *b;
-	size_t len;
-	static char *header;
-
-	while ((code = parser_next(parser, &b, &len)) > 0) {
-		switch (code) {
-			case HTTP_DATA_METHOD:
-				printf("==> METHOD: \"%s\"\n", b);
-				conn->request.method = strndup(b, len);
-				break;
-			case HTTP_DATA_PATH:
-				printf("==> PATH: \"%s\"\n", b);
-				conn->request.path = strndup(b, len);
-				break;
-			case HTTP_DATA_VERSION:
-				printf("==> VERSION: \"%s\"\n", b);
-				conn->request.version = strndup(b, len);
-				break;
-			case HTTP_DATA_HEADER:
-				printf("==> HEADER: \"%s\"\n", b);
-				header = strndup(b, len);
-				break;
-			case HTTP_DATA_FIELD:
-				printf("==> FIELD: \"%s\"\n", b);
-				hashtable_add(&conn->request.headers, header, strndup(b, len));
-				free(header);
-				break;
-		}
-	}
-	return code;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
 void
 http_on_open(conn_t *conn)
 {
@@ -74,7 +36,7 @@ http_on_message(conn_t *conn, void *data)
 	hashtable_init(&httpc->request.headers, 16, NULL);
 
 	parser_init(&parser, conn, 512, 2);
-	code = http_pull_request(httpc, &parser);
+	code = pull_request(&httpc->request, &parser);
 	switch (code) {
 		case HTTP_EVT_TIMEOUT:
 			printf("==> TIMEOUT\n");

@@ -5,6 +5,6 @@
 #include <websocket.h>
 
 void test_onrequest(http_t *conn, request_t *reqest, response_t *response);
-void ws_onrequest(ws_t *ws);
+void ws_onopen(ws_t *ws, request_t *request);
 
 #endif

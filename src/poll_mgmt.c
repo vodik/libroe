@@ -164,7 +164,7 @@ poll_mgmt_handle(poll_mgmt_t *mngr, struct fd_evt_t *data)
 		keepalive = data->cbs->onmessage(data->conn, data->shared);
 
 	/* TODO: move this into its own function */
-	if (!keepalive) {
+	if (keepalive == 0) {
 		if (data->cbs && data->cbs->onclose)
 			data->cbs->onclose(data->conn);
 

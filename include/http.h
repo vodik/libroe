@@ -7,13 +7,6 @@
 #include <conn.h>
 #include <hashtable.h>
 
-typedef struct {
-	char *method;
-	char *path;
-	char *version;
-	hashtable_t headers;
-} request_t;
-
 typedef struct _http {
 	conn_t base;
 	int keep_alive;

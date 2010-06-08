@@ -1,13 +1,16 @@
 #ifndef SMALLHTTP_WEBSOCKET
 #define SMALLHTTP_WEBSOCKET
 
+#include <stdbool.h>
 #include <conn.h>
 #include <services.h>
 #include <sbuf.h>
 
 typedef struct _ws {
 	conn_t base;
-	sbuf_t *path;
+	request_t request;
+
+	bool auth;
 
 	void (*onmessage)(struct _ws *ws, const char *msg, size_t nbytes);
 	void (*onclose)(struct _ws *ws);
@@ -20,23 +23,24 @@ void ws_on_open(conn_t *conn);
 int ws_on_message(conn_t *conn, void *data);
 void ws_on_close(conn_t *conn);
 
+void ws_destroy(conn_t *conn);
+size_t ws_write(conn_t *conn, const char *msg, size_t nbytes);
+
 static const fd_cbs_t ws_callbacks = {
-	.conn_size  = sizeof(ws_t),
-	.onopen		= ws_on_open,
-	.onmessage	= ws_on_message,
-	.onclose	= ws_on_close,
+	.conn_size    = sizeof(ws_t),
+	.conn_destroy = ws_destroy,
+	.conn_write   = ws_write,
+
+	.onopen       = ws_on_open,
+	.onmessage    = ws_on_message,
+	.onclose      = ws_on_close,
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 
 typedef struct {
 	int port;
-	void (*onopen)(ws_t *ws);
+	void (*onopen)(ws_t *ws, request_t *request);
 } ws_iface_t;
-
-void ws_init(ws_t *ws);
-void ws_free(ws_t *ws);
-void ws_close(ws_t *ws);
-size_t ws_send(ws_t *ws, const char *buf, size_t nbytes);
 
 #endif

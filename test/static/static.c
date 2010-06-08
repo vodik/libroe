@@ -13,7 +13,7 @@
 static void
 echo_message(ws_t *ws, const char *msg, size_t len)
 {
-	ws_send(ws, msg, len);
+	conn_write(&ws->base, msg, len);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -65,10 +65,9 @@ test_onrequest(http_t *conn, request_t *request, response_t *response)
 }
 
 void
-ws_onrequest(ws_t *ws)
+ws_onopen(ws_t *ws, request_t *request)
 {
-	//if (sbuf_cmp(ws->path, "/echo") == 0) {
-		/* TODO */
-	//} else
-		//ws_close(ws);
+	printf("poop!\n");
+	if (strcmp(request->path, "/echo") == 0)
+		ws->onmessage = echo_message;
 }
