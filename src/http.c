@@ -84,6 +84,12 @@ http_on_message(conn_t *conn, void *data)
 			break;
 	}
 
+	/* handle headers here
+	 * char *vale = hashtable_get("Connection");
+	 * if (strcmp(value, "Close"))
+	 * 		..
+	 */
+
 	response_init(&httpc->response, conn);
 	printf("==> QUERY REQUEST!\n");
 	if (iface && iface->onrequest)
