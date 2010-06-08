@@ -12,11 +12,10 @@
 #include <util.h>
 #include <urlencode.h>
 #include <smallhttp.h>
-#include "config.h"
-
-#include "test_http.h"
-
 #include <response.h>
+
+#include "config.h"
+#include "static.h"
 
 http_iface_t test_iface = {
 	.port = 11234,

@@ -1,4 +1,4 @@
-#include "test_http.h"
+#include "static.h"
 
 #include <stdlib.h>
 #include <stdio.h>
