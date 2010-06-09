@@ -37,7 +37,7 @@ ws_make_handshake(ws_t *conn, request_t *request)
 		"Sec-WebSocket-Location: ws://%s%s\r\n";
 
 	if (hashtable_get(&request->headers, "Sec-WebSocket-Key1") || hashtable_get(&request->headers, "Sec-WebSocket-Key2"))
-		die("formal not supported\n");
+		die("formal websocket handshake supported\n");
 
 	char *host = hashtable_get(&request->headers, "Host");
 	char *path = request->path;
@@ -115,6 +115,13 @@ ws_on_close(conn_t *conn)
 void
 ws_destroy(conn_t *conn)
 {
+	printf("==> WS CLEANUP\n");
+	ws_t *hconn = (ws_t *)conn;
+
+	free(hconn->request.method);
+	free(hconn->request.path);
+	free(hconn->request.version);
+	hashtable_cleanup(&hconn->request.headers, free);
 }
 
 size_t
