@@ -26,6 +26,6 @@ typedef struct {
 
 int pull_request(request_t *request, parser_t *parser);
 
-int service_start(service_t *service, const char *name, poll_mgmt_t *mgmt, int port, void *iface);
+int service_start(service_t *service, const char *name, poll_mgmt_t *mgmt, int port, const void *iface);
 
 #endif

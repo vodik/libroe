@@ -1,0 +1,24 @@
+#!/bin/bash
+
+export LD_LIBRARY_PATH=$(pwd)/../../lib/:$LD_LIBRARY_PATH
+ldd _ws_echo
+
+case ${1} in
+	valgrind)
+		valgrind --tool=memcheck               \
+				 --leak-check=full             \
+				 --show-reachable=yes          \
+				 --track-fds=yes               \
+				 ./_ws_echo
+	;;
+	massif)
+		valgrind --tool=massif                 \
+				 --time-unit=B                 \
+				 --massif-out-file=massif.out  \
+				 ./_ws_echo
+		ms_print massif.out | less
+	;;
+	*)
+		${1} ./_ws_echo
+	;;
+esac
