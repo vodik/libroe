@@ -72,7 +72,7 @@ pull_request(request_t *request, parser_t *parser)
 ////////////////////////////////////////////////////////////////////////////////
 
 int
-service_start(service_t *service, const char *name, poll_mgmt_t *mgmt, int port, void *iface)
+service_start(service_t *service, const char *name, poll_mgmt_t *mgmt, int port, const void *iface)
 {
 	const srv_descpt_t *srv_desc = find_service(name);
 	if (srv_desc) {
