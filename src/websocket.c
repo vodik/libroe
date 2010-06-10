@@ -33,20 +33,23 @@ ws_make_handshake(ws_t *conn, request_t *request)
 		"HTTP/1.1 %d %s\r\n"
 		"Upgrade: WebSocket\r\n"
 		"Connection: Upgrade\r\n"
-		"Sec-WebSocket-Origin: http://%s\r\n"
-		"Sec-WebSocket-Location: ws://%s%s\r\n";
+		"WebSocket-Origin: %s\r\n"
+		"WebSocket-Location: ws://%s%s\r\n"
+		"WebSocket-Protocol: sample\r\n";
 
 	if (hashtable_get(&request->headers, "Sec-WebSocket-Key1") || hashtable_get(&request->headers, "Sec-WebSocket-Key2"))
 		die("formal websocket handshake supported\n");
 
 	char *host = hashtable_get(&request->headers, "Host");
+	char *origin = hashtable_get(&request->headers, "Origin");
 	char *path = request->path;
 
 	assert(host);
+	assert(origin);
 	assert(path);
 	
 	sbuf_init(&response, 0);
-	sbuf_scatf(&response, template, 101, "Websocket Protocal Handshake", host, host, path);
+	sbuf_scatf(&response, template, 101, "Web Socket Protocol Handshake", origin, host, path);
 	sbuf_cat(&response, "\r\n");
 
 	printf("==> SENDING HEADER:\n%s\n", sbuf_raw(&response));
@@ -91,11 +94,17 @@ ws_on_message(conn_t *conn, void *data)
 	} else if (wsc->onmessage) {
 		printf("==> HANDLEING WEBSOCKET MESSAGE\n");
 
-		char buf[512];
+		char buf[512], *b;
 		int r = read(conn->fd, buf, 512);
-		buf[r] = '\0';
-		printf("==> read: \"%s\" len: %d\n", buf, r);
-		wsc->onmessage(wsc, buf, r);
+		b = buf + 1;
+		buf[r - 1] = '\0';
+		printf("==> read: \"%s\" len: %d\n", b, r);
+		wsc->onmessage(wsc, b, r);
+
+		if (r == 0) {
+			printf("==> ERROR?\n");
+			return 0;
+		}
 	} else {
 		printf("==> NO HANDLER INSTALLED\n");
 		return 0;

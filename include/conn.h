@@ -8,6 +8,12 @@ typedef struct _conn conn_t;
 typedef void (*destroy_cb)(struct _conn *c);
 typedef size_t (*write_cb)(struct _conn *c, const char *msg, size_t nbytes);
 
+typedef struct {
+	size_t size;
+	destroy_cb destroy;
+	write_cb write;
+} conn_info_t;
+
 struct _conn {
 	int fd;
 	int ref;

@@ -13,6 +13,9 @@
 int
 pull_tm_conn(void *arg, void *buf, size_t nbytes)
 {
+	/* FIXME: needed? */
+	memset(buf, 0, nbytes);
+
 	struct ibuf_store *dat = arg;
 
 	fd_set fds;

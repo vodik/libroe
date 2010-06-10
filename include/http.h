@@ -1,11 +1,10 @@
 #ifndef SMALLHTTP_HTTP
 #define SMALLHTTP_HTTP
 
+#include <stdbool.h>
+#include <conn.h>
 #include <services.h>
 #include <response.h>
-#include <parser.h>
-#include <conn.h>
-#include <hashtable.h>
 
 typedef struct _http {
 	conn_t base;
@@ -13,6 +12,8 @@ typedef struct _http {
 
 	request_t request;
 	response_t response;
+
+	void (*onclose)(struct _http *http);
 } http_t;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -26,9 +27,11 @@ void http_destroy(conn_t *conn);
 size_t http_write(conn_t *conn, const char *msg, size_t nbytes);
 
 static const fd_cbs_t http_callbacks = {
-	.conn_size    = sizeof(http_t),
-	.conn_destroy = http_destroy,
-	.conn_write   = http_write,
+	.cnfo = {
+		.size = sizeof(http_t),
+		.destroy = http_destroy,
+		.write = http_write
+	},
 
 	.onopen       = http_on_open,
 	.onmessage    = http_on_message,

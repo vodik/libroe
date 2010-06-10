@@ -4,7 +4,6 @@
 #include <stdbool.h>
 #include <conn.h>
 #include <services.h>
-#include <sbuf.h>
 
 typedef struct _ws {
 	conn_t base;
@@ -27,9 +26,11 @@ void ws_destroy(conn_t *conn);
 size_t ws_write(conn_t *conn, const char *msg, size_t nbytes);
 
 static const fd_cbs_t ws_callbacks = {
-	.conn_size    = sizeof(ws_t),
-	.conn_destroy = ws_destroy,
-	.conn_write   = ws_write,
+	.cnfo = {
+		.size = sizeof(ws_t),
+		.destroy = ws_destroy,
+		.write = ws_write
+	},
 
 	.onopen       = ws_on_open,
 	.onmessage    = ws_on_message,
