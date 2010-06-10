@@ -19,7 +19,7 @@ typedef struct _ws {
 
 /* TODO move to a private header */
 void ws_on_open(conn_t *conn);
-int ws_on_message(conn_t *conn, void *data);
+int ws_on_message(conn_t *conn, const void *data);
 void ws_on_close(conn_t *conn);
 
 void ws_destroy(conn_t *conn);

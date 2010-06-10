@@ -60,7 +60,7 @@ ws_make_handshake(ws_t *conn, request_t *request)
 }
 
 int
-ws_on_message(conn_t *conn, void *data)
+ws_on_message(conn_t *conn, const void *data)
 {
 	printf("==> WS MESSAGE: %d\n", conn->fd);
 

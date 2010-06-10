@@ -20,7 +20,7 @@ typedef struct _http {
 
 /* TODO move to a private header */
 void http_on_open(conn_t *conn);
-int http_on_message(conn_t *conn, void *data);
+int http_on_message(conn_t *conn, const void *data);
 void http_on_close(conn_t *conn);
 
 void http_destroy(conn_t *conn);

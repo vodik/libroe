@@ -23,7 +23,7 @@ http_on_open(conn_t *conn)
 }
 
 int
-http_on_message(conn_t *conn, void *data)
+http_on_message(conn_t *conn, const void *data)
 {
 	printf("==> HTTP MESSAGE: %d\n", conn->fd);
 

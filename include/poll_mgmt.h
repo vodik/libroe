@@ -11,7 +11,7 @@ enum {
 };
 
 typedef void (*onopen_cb)(conn_t *conn);
-typedef int (*onmessage_cb)(conn_t *conn, void *data);
+typedef int (*onmessage_cb)(conn_t *conn, const void *data);
 typedef void (*onclose_cb)(conn_t *conn);
 
 typedef struct {
@@ -31,7 +31,7 @@ typedef struct {
 
 void poll_mgmt_start(poll_mgmt_t *mngr, int size);
 void poll_mgmt_stop(poll_mgmt_t *mngr);
-int poll_mgmt_listen(poll_mgmt_t *mngr, int port, const fd_cbs_t *cbs, void *shared);
+int poll_mgmt_listen(poll_mgmt_t *mngr, int port, const fd_cbs_t *cbs, const void *shared);
 void poll_mgmt_close(poll_mgmt_t *mngr, int fd);
 int poll_mgmt_poll(poll_mgmt_t *mngr, int timeout);
 

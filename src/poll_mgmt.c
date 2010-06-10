@@ -20,7 +20,7 @@ struct fd_evt_t {
 	int type;
 	const fd_cbs_t *cbs;
 	conn_t *conn;
-	void *shared;
+	const void *shared;
 };
 
 /* FIXME: tie all connections to the service */
@@ -89,7 +89,7 @@ fd_cleanup(void *arg)
 * data structure.
 */
 static struct fd_evt_t *
-poll_mgmt_mkstore(poll_mgmt_t *mngr, int fd, int type, const fd_cbs_t *cbs, void *shared)
+poll_mgmt_mkstore(poll_mgmt_t *mngr, int fd, int type, const fd_cbs_t *cbs, const void *shared)
 {
 	struct fd_evt_t *data = malloc(sizeof(struct fd_evt_t));
 	data->fd = fd;
@@ -223,7 +223,7 @@ poll_mgmt_stop(poll_mgmt_t *mngr)
 * @return The file descriptor of the listening socket.
 */
 int
-poll_mgmt_listen(poll_mgmt_t *mngr, int port, const fd_cbs_t *cbs, void *shared)
+poll_mgmt_listen(poll_mgmt_t *mngr, int port, const fd_cbs_t *cbs, const void *shared)
 {
 	struct sockaddr_in addr;
 	struct epoll_event evt;
