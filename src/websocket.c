@@ -96,15 +96,18 @@ ws_on_message(conn_t *conn, void *data)
 
 		char buf[512], *b;
 		int r = read(conn->fd, buf, 512);
-		b = buf + 1;
-		buf[r - 1] = '\0';
-		printf("==> read: \"%s\" len: %d\n", b, r);
-		wsc->onmessage(wsc, b, r);
 
 		if (r == 0) {
 			printf("==> ERROR?\n");
 			return 0;
 		}
+
+		b = buf + 1;
+		buf[r - 1] = '\0';
+		r -= 2;
+
+		printf("==> read: \"%s\" len: %d\n", b, r);
+		wsc->onmessage(wsc, b, r);
 	} else {
 		printf("==> NO HANDLER INSTALLED\n");
 		return 0;
