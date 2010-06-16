@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <sys/mman.h>
 
-#include <smallhttp.h>
+#include <libroe.h>
 #include <util.h>
 
 struct client {

@@ -1,5 +1,5 @@
-#ifndef SMALLHTTP_UTIL_COMMON
-#define SMALLHTTP_UTIL_COMMON
+#ifndef LIBROE_UTIL_COMMON
+#define LIBROE_UTIL_COMMON
 
 typedef void (*cleanup_func)(void *ptr);
 typedef unsigned int (*hashfunc)(const char *);

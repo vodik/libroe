@@ -1,5 +1,5 @@
-#ifndef SMALLHTTP_REQUEST_PARSER
-#define SMALLHTTP_REQUEST_PARSER
+#ifndef LIBROE_REQUEST_PARSER
+#define LIBROE_REQUEST_PARSER
 
 #include <stddef.h>
 #include <sys/time.h>

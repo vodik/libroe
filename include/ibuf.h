@@ -1,5 +1,5 @@
-#ifndef SMALLHTTP_IBUF
-#define SMALLHTTP_IBUF
+#ifndef LIBROE_IBUF
+#define LIBROE_IBUF
 
 #include <stddef.h>
 

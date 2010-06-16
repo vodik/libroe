@@ -1,5 +1,5 @@
-#ifndef SMALLHTTP_UTIL
-#define SMALLHTTP_UTIL
+#ifndef LIBROE_UTIL
+#define LIBROE_UTIL
 
 #define LENGTH(X)                 (sizeof X / sizeof X[0] )
 

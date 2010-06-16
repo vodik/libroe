@@ -1,29 +1,39 @@
-#ifndef SMALLHTTP_WEBSOCKET
-#define SMALLHTTP_WEBSOCKET
+#ifndef LIBROE_IRC
+#define LIBROE_IRC
 
 #include <conn.h>
 #include <services.h>
-#include <sbuf.h>
+
+typedef struct _irc {
+	conn_t *base;
+} irc_t;
+
+////////////////////////////////////////////////////////////////////////////////
 
 /* TODO move to a private header */
-void irc_on_open(struct fd_context_t *context);
-int irc_on_message(struct fd_context_t *context, const char *msg, size_t nbytes);
-void irc_on_close(struct fd_context_t *context);
+void irc_on_open(conn_t *conn);
+int irc_on_message(conn_t *conn, const void *data);
+void irc_on_close(conn_t *conn);
+
+void irc_destroy(conn_t *conn);
+size_t irc_write(conn_t *conn, const char *msg, size_t nbytes);
 
 static const fd_cbs_t irc_callbacks = {
-	.onopen		= irc_on_open,
-	.onmessage	= irc_on_message,
-	.onclose	= irc_on_close,
+	.cnfo = {
+		.size = sizeof(irc_t),
+		.destroy = irc_destroy,
+		.write = irc_write,
+	},
+
+	.onopen       = irc_on_open,
+	.onmessage    = irc_on_message,
+	.onclose      = irc_on_close,
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 
-typedef struct _irc {
-	conn_t *base;
-	//sbuf_t *path;
-
-	//void (*onmessage)(struct _ws *ws, const char *msg, size_t nbytes);
-	//void (*onclose)(struct _ws *ws);
-} irc_t;
+typedef struct {
+	int port;
+} irc_iface_t;
 
 #endif

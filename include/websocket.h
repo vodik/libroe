@@ -1,5 +1,5 @@
-#ifndef SMALLHTTP_WEBSOCKET
-#define SMALLHTTP_WEBSOCKET
+#ifndef LIBROE_WEBSOCKET
+#define LIBROE_WEBSOCKET
 
 #include <stdbool.h>
 #include <conn.h>
@@ -29,7 +29,7 @@ static const fd_cbs_t ws_callbacks = {
 	.cnfo = {
 		.size = sizeof(ws_t),
 		.destroy = ws_destroy,
-		.write = ws_write
+		.write = ws_write,
 	},
 
 	.onopen       = ws_on_open,

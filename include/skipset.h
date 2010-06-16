@@ -1,5 +1,5 @@
-#ifndef SMALLHTTP_UTIL_SKIPSET
-#define SMALLHTTP_UTIL_SKIPSET
+#ifndef LIBROE_UTIL_SKIPSET
+#define LIBROE_UTIL_SKIPSET
 
 #include "common.h"
 

@@ -1,5 +1,5 @@
-#ifndef SMALLHTTP_CONFIG
-#define SMALLHTTP_CONFIG
+#ifndef LIBROE_CONFIG
+#define LIBROE_CONFIG
 
 #define ACCEPT_BACKLOG			10
 

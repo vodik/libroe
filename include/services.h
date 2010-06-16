@@ -1,5 +1,5 @@
-#ifndef SMALLHTTP_SERVICES
-#define SMALLHTTP_SERVICES
+#ifndef LIBROE_SERVICES
+#define LIBROE_SERVICES
 
 #include <poll_mgmt.h>
 #include <hashtable.h>
@@ -26,6 +26,7 @@ typedef struct {
 
 int pull_request(request_t *request, parser_t *parser);
 
-int service_start(service_t *service, const char *name, poll_mgmt_t *mgmt, int port, const void *iface);
+int roe_start(const char *name, poll_mgmt_t *mgmt, int port, const void *iface);
+void roe_stop();
 
 #endif

@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -pedantic --std=gnu99 -I../../include -O0 -g -D_GNU_SOURCE
-LDFLAGS = -L../../lib -lsmallhttp -lm
+LDFLAGS = -L../../lib -lroe -lm
 
 SRC = ws_echo.c
 OBJ = ${SRC:.c=.o}

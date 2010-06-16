@@ -1,5 +1,5 @@
-#ifndef SMALLHTTP_URLENCODE
-#define SMALLHTTP_URLENCODE
+#ifndef LIBROE_URLENCODE
+#define LIBROE_URLENCODE
 
 #include <stddef.h>
 #include "hashtable.h"

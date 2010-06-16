@@ -46,5 +46,6 @@ conn_close(conn_t *c)
 size_t
 conn_write(conn_t *c, const char *msg, size_t bytes)
 {
+	assert(c->write);
 	return c->write(c, msg, bytes);
 }

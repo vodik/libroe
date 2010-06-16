@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Werror -pedantic -fPIC --std=gnu99 -I../include -O0 -g -D_GNU_SOURCE
-LDFLAGS = -shared -Wl,-soname,libsmallhttp.so.1
+LDFLAGS = -shared -Wl,-soname,libroe.so.1
 
 SRC = services.c     \
 	  conn.c         \
@@ -10,17 +10,17 @@ SRC = services.c     \
 	  poll_mgmt.c    \
 	  response.c     \
 	  skipset.c      \
-	  smallhttp.c    \
 	  urlencode.c    \
 	  util.c         \
 	  websocket.c    \
 	  ibuf.c         \
+	  irc.c          \
 	  sbuf.c
 OBJ = ${SRC:.c=.o}
 
-all: libsmallhttp.so
+all: libroe.so
 
-libsmallhttp.so: ${OBJ}
+libroe.so: ${OBJ}
 	@echo CC -o $@
 	@${CC} ${LDFLAGS} -o $@.1.0 ${OBJ}
 	@ln -f $@.1.0 ../lib/$@
@@ -33,6 +33,6 @@ libsmallhttp.so: ${OBJ}
 
 clean:
 	@echo cleaning...
-	@rm -f libsmallhttp.so.1.0 ${OBJ} ../lib/*
+	@rm -f libroe.so.1.0 ${OBJ} ../lib/*
 
 .PHONY: all clean

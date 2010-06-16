@@ -1,5 +1,5 @@
-#ifndef SMALLHTTP_CONN
-#define SMALLHTTP_CONN
+#ifndef LIBROE_CONN
+#define LIBROE_CONN
 
 #include <stddef.h>
 

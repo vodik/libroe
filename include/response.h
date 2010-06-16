@@ -1,5 +1,5 @@
-#ifndef SMALLHTTP_RESPONSE
-#define SMALLHTTP_RESPONSE
+#ifndef LIBROE_RESPONSE
+#define LIBROE_RESPONSE
 
 #include <stddef.h>
 #include <conn.h>

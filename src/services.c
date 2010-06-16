@@ -6,7 +6,7 @@
 
 #include <http.h>
 #include <websocket.h>
-/*#include <irc.h>*/
+#include <irc.h>
 #include <util.h>
 
 typedef struct {
@@ -14,10 +14,16 @@ typedef struct {
 	const fd_cbs_t *cbs;
 } srv_descpt_t;
 
+typedef struct _srv_list srv_list_t;
+struct _srv_list {
+	service_t service;
+	srv_list_t *next;
+};
+
 static const srv_descpt_t Services[] = {
 	{ "http",      &http_callbacks },
 	{ "websocket", &ws_callbacks   },
-	/*{ "irc",       &irc_callbacks  },*/
+	{ "irc",       &irc_callbacks  },
 };
 
 const srv_descpt_t *
@@ -71,16 +77,33 @@ pull_request(request_t *request, parser_t *parser)
 
 ////////////////////////////////////////////////////////////////////////////////
 
+static srv_list_t *root = NULL;
+
 int
-service_start(service_t *service, const char *name, poll_mgmt_t *mgmt, int port, const void *iface)
+roe_start(const char *name, poll_mgmt_t *mgmt, int port, const void *iface)
 {
 	const srv_descpt_t *srv_desc = find_service(name);
 	if (srv_desc) {
-		service->fd = poll_mgmt_listen(mgmt, port, srv_desc->cbs, iface);
-		printf("--> starting %s@%d - fd:%d\n", name, port, service->fd);
+		srv_list_t *srv = malloc(sizeof(srv_list_t));
+		srv->service.fd = poll_mgmt_listen(mgmt, port, srv_desc->cbs, iface);
+
+		printf("--> starting %s@%d - fd:%d\n", name, port, srv->service.fd);
+
+		srv->next = root;
+		root = srv;
 		return 0;
-	} else {
-		die("failed to match server \"%s\"\n", name);
-		return 1;
 	}
+	return -1;
+}
+
+void
+roe_stop()
+{
+	srv_list_t *srv = root, *next;
+	while (srv) {
+		next = srv->next;
+		free(srv);
+		srv = next;
+	}
+	root = NULL;
 }

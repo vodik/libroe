@@ -1,5 +1,5 @@
-#ifndef SMALLHTTP_POLL_MGMT_H
-#define SMALLHTTP_POLL_MGMT_H
+#ifndef LIBROE_POLL_MGMT_H
+#define LIBROE_POLL_MGMT_H
 
 #include <stddef.h>
 #include <conn.h>
