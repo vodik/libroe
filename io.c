@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "io_ref.h"
-#include "watch.c"
 
 struct io *
 io_new_fd(int fd)
@@ -44,8 +43,10 @@ size_t
 io_read(struct io *io, char *buf, size_t len)
 {
 	ssize_t ret = read(io->fd, buf, len);
-	if (ret < 0)
-		return 0; /* TODO error handling */
+	if (ret < 0) {
+		perror("read");
+		exit(EXIT_FAILURE); /* TODO error handling */
+	}
 	return (size_t)ret;
 }
 
@@ -53,7 +54,9 @@ size_t
 io_write(struct io *io, char *buf, size_t len)
 {
 	ssize_t ret = write(io->fd, buf, len);
-	if (ret < 0)
-		return 0; /* TODO error handling */
+	if (ret < 0) {
+		perror("read");
+		exit(EXIT_FAILURE); /* TODO error handling */
+	}
 	return (size_t)ret;
 }

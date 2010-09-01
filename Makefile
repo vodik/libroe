@@ -1,14 +1,23 @@
-DIRS = src test
+CC = clang
+CFLAGS = -Wall -Werror -pedantic -std=gnu99 -O0 -g
+LDFLAGS = -lm
 
-all: ${DIRS}
+EXE = libroe2
+SRC = libroe2.c service.c io.c watch.c http.c websockets.c network.c util.c
+OBJ = ${SRC:.c=.o}
 
-${DIRS}: force
-	@${MAKE} -C $@ all
+all: ${EXE}
 
-force:
-	@true
+${EXE}: ${OBJ}
+	@echo CC -o $@
+	@${CC} ${LDFLAGS} -o $@ ${OBJ}
+
+%.o: %.c
+	@echo CC $@
+	@${CC} -o $@ -c $< ${CFLAGS}
 
 clean:
 	@echo cleaning...
+	@rm ${EXE} ${OBJ}
 
 .PHONY: all clean

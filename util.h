@@ -1,5 +1,5 @@
-#ifndef LIBROE_UTIL
-#define LIBROE_UTIL
+#ifndef LIBROE2_UTIL
+#define LIBROE2_UTIL
 
 #define LENGTH(X)                 (sizeof X / sizeof X[0] )
 
