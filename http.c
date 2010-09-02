@@ -13,7 +13,7 @@
 #include "network.h"
 #include "util.h"
 
-struct io *
+IO *
 http_init(int port)
 {
 	struct sockaddr_in addr;
@@ -40,7 +40,7 @@ http_init(int port)
 }
 
 void
-http_request(struct io *io, int events, void *arg)
+http_request(IO *io, int events, void *arg)
 {
 	if (events & IO_HUP) {
 		printf("--> hup\n");
@@ -55,12 +55,12 @@ http_request(struct io *io, int events, void *arg)
 }
 
 void
-http_iofunc(struct io *io, int events, void *arg)
+http_iofunc(IO *io, int events, void *arg)
 {
 	int cfd, fd = io_get_fd(io);
 	struct sockaddr_in addr = { 0 };
 	size_t addr_len = sizeof(addr);
-	struct io *client;
+	IO *client;
 
 	if (events & IO_IN) {
 		if ((cfd = accept(fd, (struct sockaddr *)&addr, &addr_len)) > -1) {

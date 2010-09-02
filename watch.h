@@ -8,7 +8,7 @@ struct io;
 enum io_events {
 	IO_IN  = EPOLLIN,
 	IO_OUT = EPOLLOUT,
-	IO_HUP = EPOLLRDHUP
+	IO_HUP = EPOLLRDHUP,
 };
 
 typedef void (*iofunc)(struct io *, int, void *);

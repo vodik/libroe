@@ -1,4 +1,4 @@
-#include "service.h"
+#include "services.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -9,10 +9,10 @@
 #include "util.h"
 #include "io.h"
 
-typedef struct io *(*ioinit)(int port);
+typedef IO *(*ioinit)(int port);
 
 struct service {
-	struct io *io;
+	IO *io;
 	struct service *next;
 };
 

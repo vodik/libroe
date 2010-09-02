@@ -3,7 +3,7 @@ CFLAGS = -Wall -Werror -pedantic -std=gnu99 -O0 -g
 LDFLAGS = -lm
 
 EXE = libroe2
-SRC = libroe2.c service.c io.c watch.c http.c websockets.c network.c util.c
+SRC = libroe2.c services.c io.c watch.c http.c websockets.c network.c util.c obuf.c ibuf.c buf.c
 OBJ = ${SRC:.c=.o}
 
 all: ${EXE}
