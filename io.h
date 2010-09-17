@@ -6,7 +6,7 @@
 typedef struct io IO;
 
 struct io *io_new_fd(int fd);
-void io_ref(struct io *io);
+struct io *io_ref(struct io *io);
 void io_close(struct io *io);
 
 int io_get_fd(struct io *io);

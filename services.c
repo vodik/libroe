@@ -23,7 +23,7 @@ struct service_descrpt {
 };
 
 static const struct service_descrpt Services[] = {
-	{ "http",      &http_init, &http_iofunc },
+	{ "http",      &http_init, &http_accept },
 	{ "websocket", &ws_init,   &ws_iofunc   },
 };
 

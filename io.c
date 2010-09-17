@@ -45,10 +45,11 @@ io_new_fd(int fd)
 	return io;
 }
 
-void
+struct io *
 io_ref(struct io *io)
 {
 	++io->refs;
+	return io;
 }
 
 void

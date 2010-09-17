@@ -13,6 +13,32 @@
 #include "network.h"
 #include "util.h"
 
+static void
+http_hup(IO *io)
+{
+	printf("--> hup\n");
+	io_close(io);
+}
+
+static void
+http_request(IO *io)
+{
+	printf("--> request\n");
+	char buf[1024];
+	size_t ret = io_read(io, buf, 1024);
+	buf[ret] = '\0';
+	printf("%s", buf);
+}
+
+static void
+http_incoming(IO *io, int events, void *arg)
+{
+	if (events & IO_HUP)
+		http_hup(io);
+	else if (events & IO_IN)
+		http_request(io);
+}
+
 IO *
 http_init(int port)
 {
@@ -40,22 +66,7 @@ http_init(int port)
 }
 
 void
-http_request(IO *io, int events, void *arg)
-{
-	if (events & IO_HUP) {
-		printf("--> hup\n");
-		io_close(io);
-	} else if (events & IO_IN) {
-		printf("--> request\n");
-		char buf[1024];
-		size_t ret = io_read(io, buf, 1024);
-		buf[ret] = '\0';
-		printf("%s", buf);
-	}
-}
-
-void
-http_iofunc(IO *io, int events, void *arg)
+http_accept(IO *io, int events, void *arg)
 {
 	int cfd, fd = io_get_fd(io);
 	struct sockaddr_in addr = { 0 };
@@ -67,7 +78,7 @@ http_iofunc(IO *io, int events, void *arg)
 			socket_set_nonblock(cfd);
 			client = io_new_fd(cfd);
 			printf("--> accepted\n");
-			io_watch(client, IO_IN | IO_HUP, http_request, NULL);
+			io_watch(client, IO_IN | IO_HUP, http_incoming, NULL);
 		}
 	}
 }

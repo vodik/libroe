@@ -4,6 +4,6 @@
 #include "io.h"
 
 struct io *http_init(int port);
-void http_iofunc(struct io *io, int events, void *arg);
+void http_accept(struct io *io, int events, void *arg);
 
 #endif
