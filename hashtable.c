@@ -30,7 +30,7 @@ sdbmhasher(const char *key)
 * @param table
 */
 void
-hashtable_init(hashtable_t *table, unsigned int size, hashfunc hasher)
+hashtable_init(struct hashtable *table, unsigned int size, hashfunc hasher)
 {
 	int memsize = sizeof(struct hashnode_t *) * size;
 
@@ -46,7 +46,7 @@ hashtable_init(hashtable_t *table, unsigned int size, hashfunc hasher)
 * @param table
 */
 void
-hashtable_cleanup(hashtable_t *table, cleanup_func clean)
+hashtable_cleanup(struct hashtable *table, cleanup_func clean)
 {
 	int i;
 	struct hashnode_t *node, *prev;
@@ -73,7 +73,7 @@ hashtable_cleanup(hashtable_t *table, cleanup_func clean)
 * @param data
 */
 void
-hashtable_add(hashtable_t *table, const char *key, void *data)
+hashtable_add(struct hashtable *table, const char *key, void *data)
 {
 	struct hashnode_t *node;
 	unsigned int hash = table->hasher(key) % table->size;
@@ -102,7 +102,7 @@ hashtable_add(hashtable_t *table, const char *key, void *data)
 * @return 0 on success, 1 on failure.
 */
 void *
-hashtable_remove(hashtable_t *table, const char *key)
+hashtable_remove(struct hashtable *table, const char *key)
 {
 	struct hashnode_t *node, *prev = NULL;
 	unsigned int hash = table->hasher(key) % table->size;
@@ -136,7 +136,7 @@ hashtable_remove(hashtable_t *table, const char *key)
 * @return if present, the stored data. Otherwise NULL.
 */
 void *
-hashtable_get(const hashtable_t *table, const char *key)
+hashtable_get(const struct hashtable *table, const char *key)
 {
 	struct hashnode_t *node;
 	unsigned int hash = table->hasher(key) % table->size;

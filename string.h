@@ -9,13 +9,12 @@
     #define GNUC_PRINTF_CHECK(fmt_idx, arg_idx)
 #endif
 
-#define string_raw(SB) ((SB)->NUL ? (SB)->buf : NULL)
-#define string_len(SB) ((SB)->NUL)
-
 #define _S(SB) string_raw((SB))
 
-void string_init(struct string *sb, size_t reserve);
-void string_cleanup(struct string *sb);
+struct string;
+
+struct string *string_new(size_t reserve);
+void string_free(struct string *sb);
 
 void string_clear(struct string *sb);
 char *string_detach(struct string *sb);
@@ -32,5 +31,8 @@ void string_catf(struct string *sb, const char *fmt, ...) GNUC_PRINTF_CHECK(2,3)
 int string_cmp(struct string *sb, const char *str);
 int string_ncmp(struct string *sb, const char *str, size_t len);
 int string_bcmp(struct string *sb, const struct string *buf);
+
+const char *string_raw(struct string *sb);
+size_t string_len(struct string *sb);
 
 #endif

@@ -1,7 +1,15 @@
 #ifndef LIBROE_UTIL_HASHTABLE
 #define LIBROE_UTIL_HASHTABLE
 
-#include "common.h"
+//#include "common.h"
+
+typedef void (*cleanup_func)(void *ptr);
+typedef unsigned int (*hashfunc)(const char *);
+
+struct keyval_pair_t {
+	int key;
+	void *val;
+};
 
 struct hashnode_t {
 	char *key;
@@ -9,17 +17,17 @@ struct hashnode_t {
 	struct hashnode_t *next;
 };
 
-typedef struct {
+struct hashtable {
 	unsigned int size;
 	struct hashnode_t **nodes;
 	hashfunc hasher;
-} hashtable_t;
+};
 
-void hashtable_init(hashtable_t *table, unsigned int size, hashfunc hasher);
-void hashtable_cleanup(hashtable_t *table, cleanup_func clean);
+struct hashtable *hashtable_new(unsigned int size, hashfunc hasher);
+void hashtable_free(struct hashtable *table, cleanup_func clean);
 
-void hashtable_add(hashtable_t *table, const char *key, void *data);
-void *hashtable_get(const hashtable_t *table, const char *key);
-void *hashtable_remove(hashtable_t *table, const char *key);
+void hashtable_add(struct hashtable *table, const char *key, void *data);
+void *hashtable_get(const struct hashtable *table, const char *key);
+void *hashtable_remove(struct hashtable *table, const char *key);
 
 #endif

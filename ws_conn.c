@@ -33,7 +33,7 @@ ws_respond(IO *io, struct request *request)
 struct conn *
 conn_new_ws(IO *io)
 {
-	struct request *reqest = parser_request(io);
+	struct request *reqest = parse_request(io);
 
 	if (hashtable_get(request->headers, "Sec-WebSocket-Key1") || hashtable_get(request->headers, "Sec-WebSocket-Key2")) {
 		printf("formal websocket handshake supported\n");

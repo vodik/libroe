@@ -24,7 +24,7 @@ next_power(unsigned x)
 /* Extend the buffer in sb by at least len bytes.
  * Note len should include the space required for the NUL terminator */
 static void
-string_extendby(string_t *sb, int len)
+string_extendby(struct string *sb, int len)
 {
 	char* buf;
 
@@ -41,7 +41,7 @@ string_extendby(string_t *sb, int len)
 }
 
 static void
-string_vprintf(string_t *sb, const char *fmt, const va_list ap)
+string_vprintf(struct string *sb, const char *fmt, const va_list ap)
 {
 	int num_required;
 	while ((num_required = vsnprintf(sb->buf + sb->NUL, sb->buflen - sb->NUL, fmt, ap)) >= sb->buflen - sb->NUL)
@@ -52,7 +52,7 @@ string_vprintf(string_t *sb, const char *fmt, const va_list ap)
 ////////////////////////////////////////////////////////////////////////////////
 
 void
-string_init(string_t *sb, size_t reserve)
+string_init(struct string *sb, size_t reserve)
 {
 	sb->buf = NULL;
 	sb->NUL = 0;
@@ -63,14 +63,14 @@ string_init(string_t *sb, size_t reserve)
 }
 
 void
-string_cleanup(string_t *sb)
+string_cleanup(struct string *sb)
 {
 	if (sb->buf)
 		free(sb->buf);
 }
 
 void
-string_clear(string_t *sb)
+string_clear(struct string *sb)
 {
 	sb->NUL = 0;
 	if (sb->buf)
@@ -78,7 +78,7 @@ string_clear(string_t *sb)
 }
 
 void
-string_cat(string_t *sb, const char *str)
+string_cat(struct string *sb, const char *str)
 {
 	size_t len = strlen(str);
 
@@ -89,7 +89,7 @@ string_cat(string_t *sb, const char *str)
 }
 
 void
-string_putc(string_t *sb, const char c)
+string_putc(struct string *sb, const char c)
 {
 	string_extendby(sb, 2);
 	sb->buf[sb->NUL++] = c;
@@ -97,7 +97,7 @@ string_putc(string_t *sb, const char c)
 }
 
 void
-string_ncat(string_t *sb, const char *str, size_t len)
+string_ncat(struct string *sb, const char *str, size_t len)
 {
 	string_extendby(sb, len + 1);
 	memcpy(&sb->buf[sb->NUL], str, len);
@@ -106,10 +106,23 @@ string_ncat(string_t *sb, const char *str, size_t len)
 }
 
 void
-string_scatf(string_t *sb, const char *fmt, ...)
+string_scatf(struct string *sb, const char *fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);
 	string_vprintf(sb, fmt, ap);
 	va_end(ap);
 }
+
+const char *
+string_raw(struct string *sb)
+{
+	return sb->NUL ? sb->buf : NULL;
+}
+
+size_t
+string_len(struct string *sb)
+{
+	return sb->NUL;
+}
+
