@@ -68,10 +68,24 @@ io_get_fd(struct io *io)
 	return io->fd;
 }
 
+int
+io_eof(struct io *io)
+{
+	return 0;
+}
+
 size_t
 io_read(struct io *io, char *buf, size_t len)
 {
 	return buf_read(io->buf, buf, len);
+}
+
+char
+io_getc(struct io *io)
+{
+	char c[2];
+	buf_read(io->buf, c, 2);
+	return c[0];
 }
 
 size_t

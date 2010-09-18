@@ -29,15 +29,18 @@ sdbmhasher(const char *key)
 * @param hasher
 * @param table
 */
-void
-hashtable_init(struct hashtable *table, unsigned int size, hashfunc hasher)
+struct hashtable *
+hashtable_new(unsigned int size, hashfunc hasher)
 {
+	struct hashtable *table = malloc(sizeof(struct hashtable));
 	int memsize = sizeof(struct hashnode_t *) * size;
 
 	table->nodes = malloc(memsize);
 	memset(table->nodes, 0, memsize);
 	table->size = size;
 	table->hasher = hasher ? hasher : sdbmhasher;
+
+	return table;
 }
 
 /** 
@@ -46,7 +49,7 @@ hashtable_init(struct hashtable *table, unsigned int size, hashfunc hasher)
 * @param table
 */
 void
-hashtable_cleanup(struct hashtable *table, cleanup_func clean)
+hashtable_free(struct hashtable *table, cleanup_func clean)
 {
 	int i;
 	struct hashnode_t *node, *prev;
@@ -63,6 +66,7 @@ hashtable_cleanup(struct hashtable *table, cleanup_func clean)
 		}
 	}
 	free(table->nodes);
+	free(table);
 }
 
 /** 

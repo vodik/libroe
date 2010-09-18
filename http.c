@@ -13,6 +13,8 @@
 #include "network.h"
 #include "util.h"
 
+#include "parser.h"
+
 static void
 http_hup(IO *io)
 {
@@ -24,10 +26,14 @@ static void
 http_request(IO *io)
 {
 	printf("--> request\n");
-	char buf[1024];
-	size_t ret = io_read(io, buf, 1024);
-	buf[ret] = '\0';
-	printf("%s", buf);
+
+	struct request *request = parse_request(io);
+	printf("REQEST!\n");
+	printf(" > %s on %s\n", request->method, request->path);
+	printf(" > HOST: %s\n", request_header(request, "Host"));
+	printf(" > USER_AGENT: %s\n", request_header(request, "User-Agent"));
+
+	io_close(io);
 }
 
 static void

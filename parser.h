@@ -6,12 +6,16 @@
 #include "hashtable.h"
 
 struct request {
-	struct string *method;
-	struct string *path;
-	struct string *version;
+	char *method;
+	char *path;
+	char *version;
 	struct hashtable *headers;
 };
 
 struct request *parse_request(IO *io);
+void request_free(struct request *request);
+
+const char *request_header(struct request *request, const char *header);
+
 
 #endif

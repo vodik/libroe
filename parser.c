@@ -99,10 +99,8 @@ state_path(IO *io, struct string *dest)
 
 		if (c == ' ')
 			return STATE_ACCEPT;
-		else if (c >= 'A' && c <= 'Z')
-			string_putc(dest, c);
 		else
-			return STATE_FAIL;
+			string_putc(dest, c);
 	}
 	return STATE_FAIL;
 }
@@ -201,26 +199,50 @@ struct request *
 parse_request(IO *io)
 {
 	struct request *request = malloc(sizeof(struct request));
-	struct string *dest;
 	int state = STATE_METHOD;
 	state_fn *func = States[state];
 	int ret;
 
-	request->method = string_new(0);
-	request->path = string_new(0);
-	request->version = string_new(0);
+	struct string *header = string_new(0);
+	struct string *data = string_new(0);
+	struct string *dest = data;
+
 	request->headers = hashtable_new(23, NULL);
 
-	dest = request->method;
 	while ((ret = func(io, dest)) != STATE_DONE) {
 		if (ret == STATE_FAIL) {
 			printf("invalid state!, TODO: handle this ;)\n");
 			exit(EXIT_FAILURE);
 		}
-		printf("dest: %s\n", string_raw(dest));
-		string_clear(dest);
+
+		switch (state) {
+			case STATE_METHOD:
+				request->method = string_detach(dest);
+				break;
+			case STATE_PATH:
+				request->path = string_detach(dest);
+				break;
+			case STATE_VERSION:
+				request->version = string_detach(dest);
+				break;
+			case STATE_FIELD:
+				hashtable_add(request->headers, _S(header), strdup(_S(dest)));
+				string_clear(dest);
+				string_clear(header);
+				break;
+		}
+
 		state = Transforms[state];
+		func = States[state];
+
+		if (state == STATE_HEADER)
+			dest = header;
+		else
+			dest = data;
 	}
+
+	string_free(data);
+	string_free(header);
 
 	return request;
 }
@@ -229,6 +251,12 @@ void
 request_free(struct request *request)
 {
 	hashtable_free(request->headers, free);
+
 	free(request);
 }
 
+const char *
+request_header(struct request *request, const char *header)
+{
+	return hashtable_get(request->headers, header);
+}

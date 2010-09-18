@@ -31,11 +31,12 @@ string_extendby(struct string *sb, int len)
 	len += sb->NUL;
 	if (len <= sb->buflen)
 		return;
-	if (!sb->buflen)
-		sb->buflen = 32;
 
-	sb->buflen = next_power(len);
-	printf("--- expand: %d\n", sb->buflen);
+	if (!sb->buflen && len < 32)
+		sb->buflen = 32;
+	else
+		sb->buflen = next_power(len);
+
 	buf = realloc(sb->buf, sb->buflen);
 	sb->buf = buf;
 }
@@ -51,22 +52,36 @@ string_vprintf(struct string *sb, const char *fmt, const va_list ap)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void
-string_init(struct string *sb, size_t reserve)
+struct string *
+string_new(size_t reserve)
 {
+	struct string *sb = malloc(sizeof(struct string));
 	sb->buf = NULL;
 	sb->NUL = 0;
 	sb->buflen = 0;
 
 	if (reserve)
 		string_extendby(sb, reserve + 1);
+
+	return sb;
 }
 
 void
-string_cleanup(struct string *sb)
+string_free(struct string *sb)
 {
 	if (sb->buf)
 		free(sb->buf);
+	free(sb);
+}
+
+char *
+string_detach(struct string *sb)
+{
+	char *buf = sb->buf;
+	sb->buf = NULL;
+	sb->NUL = 0;
+	sb->buflen = 0;
+	return buf;
 }
 
 void
