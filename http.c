@@ -32,6 +32,7 @@ http_request(IO *io)
 	printf(" > %s on %s\n", request->method, request->path);
 	printf(" > HOST: %s\n", request_header(request, "Host"));
 	printf(" > USER_AGENT: %s\n", request_header(request, "User-Agent"));
+	request_free(request);
 
 	io_close(io);
 }

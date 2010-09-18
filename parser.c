@@ -4,10 +4,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
-#include <unistd.h>
-#include <sys/time.h>
 
-//#include <string.h>
+#include "io.h"
+#include "hashtable.h"
+#include "string.h"
 
 enum methods {
 	HTTP_METHOD_DELETE,
@@ -226,8 +226,7 @@ parse_request(IO *io)
 				request->version = string_detach(dest);
 				break;
 			case STATE_FIELD:
-				hashtable_add(request->headers, _S(header), strdup(_S(dest)));
-				string_clear(dest);
+				hashtable_add(request->headers, _S(header), string_detach(dest));
 				string_clear(header);
 				break;
 		}
@@ -251,6 +250,9 @@ void
 request_free(struct request *request)
 {
 	hashtable_free(request->headers, free);
+	free(request->method);
+	free(request->path);
+	free(request->version);
 
 	free(request);
 }

@@ -57,3 +57,10 @@ roe_start(const char *name, int port)
 	}
 	return NULL;
 }
+
+void
+roe_stop(struct service *service)
+{
+	io_close(service->io);
+	free(service);
+}

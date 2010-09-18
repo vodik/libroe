@@ -21,6 +21,7 @@ buf_free(struct buf *buf)
 {
 	obuf_free(buf->o);
 	ibuf_free(buf->i);
+	free(buf);
 }
 
 size_t

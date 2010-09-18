@@ -26,17 +26,18 @@ next_power(unsigned x)
 static void
 string_extendby(struct string *sb, int len)
 {
-	char* buf;
+	char *buf;
 
 	len += sb->NUL;
 	if (len <= sb->buflen)
 		return;
 
-	if (!sb->buflen && len < 32)
+	if (!sb->buflen)
 		sb->buflen = 32;
 	else
 		sb->buflen = next_power(len);
 
+alloc:
 	buf = realloc(sb->buf, sb->buflen);
 	sb->buf = buf;
 }
