@@ -9,30 +9,6 @@
 #include "hashtable.h"
 #include "string.h"
 
-enum methods {
-	HTTP_METHOD_DELETE,
-	HTTP_METHOD_GET,
-	HTTP_METHOD_HEAD,
-	HTTP_METHOD_POST,
-	HTTP_METHOD_PUT,
-
-	HTTP_METHOD_CONNECT,
-	HTTP_METHOD_OPTIONS,
-	HTTP_METHOD_TRACE,
-
-#ifdef WEBDAV
-	HTTP_METHOD_COPY,
-	HTTP_METHOD_LOCK,
-	HTTP_METHOD_MKCOL,
-	HTTP_METHOD_MOVE,
-	HTTP_METHOD_PROPFIND,
-	HTTP_METHOD_PROPPATCH,
-	HTTP_METHOD_UNLOCK,
-#endif
-
-	LAST_HTTP_METHOD,
-};
-
 enum parser_evt {
 	STATE_METHOD,
 	STATE_PATH,
@@ -196,9 +172,15 @@ state_field(IO *io, struct string *dest)
 ////////////////////////////////////////////////////////////////////////////////
 
 struct request *
-parse_request(IO *io)
+parser_new()
 {
 	struct request *request = malloc(sizeof(struct request));
+	return request;
+}
+
+void
+parse_request(struct request *request, IO *io)
+{
 	int state = STATE_METHOD;
 	state_fn *func = States[state];
 	int ret;
@@ -242,8 +224,6 @@ parse_request(IO *io)
 
 	string_free(data);
 	string_free(header);
-
-	return request;
 }
 
 void

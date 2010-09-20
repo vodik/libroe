@@ -1,20 +1,7 @@
 #include "conn.h"
 
 #include "io.h"
-
-
-struct conn_impl {
-	void (*accept)();
-};
-
-
-//////////////////////////////////
-
-
-struct conn {
-	IO *io;
-	unsigned refs;
-};
+#include "conn_ref.h"
 
 struct conn *
 conn_new_fd(int fd)

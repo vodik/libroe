@@ -1,9 +1,12 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <signal.h>
 
 #include "io.h"
 #include "services.h"
+#include "conn.h"
+#include "parser.h"
 
 struct service *http;
 
@@ -17,6 +20,15 @@ end(int sig)
 void
 on_request(struct service *service, struct conn *conn)
 {
+	struct request *request = conn_request(conn);
+
+	printf("REQEST!\n");
+	printf(" > %s on %s\n", request->method, request->path);
+	printf(" > HOST: %s\n", request_header(request, "Host"));
+	printf(" > USER_AGENT: %s\n", request_header(request, "User-Agent"));
+
+	if (strcmp("/", request->path) == 0) {
+	}
 }
 
 int

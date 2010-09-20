@@ -12,7 +12,9 @@ struct request {
 	struct hashtable *headers;
 };
 
-struct request *parse_request(IO *io);
+struct request *request_new();
+
+void parse_request(struct request *request, IO *io);
 void request_free(struct request *request);
 
 const char *request_header(struct request *request, const char *header);

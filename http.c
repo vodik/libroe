@@ -14,36 +14,38 @@
 #include "util.h"
 
 #include "parser.h"
+#include "conn.h"
+#include "conn_ref.h"
 
 static void
-http_hup(IO *io)
+http_hup(struct conn *conn)
 {
 	printf("--> hup\n");
-	io_close(io);
+	conn_close(conn);
 }
 
 static void
-http_request(IO *io)
+http_request(struct conn *conn)
 {
 	printf("--> request\n");
 
-	struct request *request = parse_request(io);
-	printf("REQEST!\n");
-	printf(" > %s on %s\n", request->method, request->path);
-	printf(" > HOST: %s\n", request_header(request, "Host"));
-	printf(" > USER_AGENT: %s\n", request_header(request, "User-Agent"));
-	request_free(request);
+	if (!conn->request)
+		conn->request = request_new();
 
-	io_close(io);
+	parse_request(conn->request, conn->io);
+
+	conn->service->cb(conn->service, conn);
 }
 
 static void
 http_incoming(IO *io, int events, void *arg)
 {
+	struct conn *conn = arg;
+
 	if (events & IO_HUP)
-		http_hup(io);
+		http_hup(conn);
 	else if (events & IO_IN)
-		http_request(io);
+		http_request(conn);
 }
 
 IO *
@@ -79,13 +81,19 @@ http_accept(IO *io, int events, void *arg)
 	struct sockaddr_in addr = { 0 };
 	size_t addr_len = sizeof(addr);
 	IO *client;
+	struct service *service = arg;
 
 	if (events & IO_IN) {
 		if ((cfd = accept(fd, (struct sockaddr *)&addr, &addr_len)) > -1) {
 			socket_set_nonblock(cfd);
 			client = io_new_fd(cfd);
+
+			/* TODO: create conn */
+			struct conn *conn = conn_new(service, io);
+			conn->service = arg;
+
 			printf("--> accepted\n");
-			io_watch(client, IO_IN | IO_HUP, http_incoming, NULL);
+			io_watch(client, IO_IN | IO_HUP, http_incoming, conn);
 		}
 	}
 }

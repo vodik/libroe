@@ -8,18 +8,9 @@
 #include "websockets.h"
 #include "util.h"
 #include "io.h"
+#include "conn_ref.h"
 
 typedef IO *(*ioinit)(int port);
-
-struct service {
-	char *name;
-	int port;
-	IO *io;
-	int active;
-	roe_cb cb;
-	const struct service_descrpt *descrpt;
-	struct service *next;
-};
 
 struct service_descrpt {
 	const char *name;
