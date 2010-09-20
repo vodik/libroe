@@ -2,8 +2,13 @@
 #define LIBROE2_SERVICES
 
 struct service;
+struct conn;
 
-struct service *roe_start(const char *name, int port);
+typedef void (*roe_cb)(struct service *service, struct conn *conn);
+
+struct service *roe_new(const char *name, int port);
+
+void roe_start(struct service *service, roe_cb cb);
 void roe_stop(struct service *service);
 
 #endif

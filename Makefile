@@ -1,5 +1,5 @@
-CC = clang
-CFLAGS = -Wall -Werror -pedantic -std=gnu99 -O0 -g
+CC = gcc
+CFLAGS = -Wall -Werror -pedantic -std=gnu99 -O3
 LDFLAGS = -lm
 
 EXE = libroe2

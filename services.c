@@ -12,7 +12,12 @@
 typedef IO *(*ioinit)(int port);
 
 struct service {
+	char *name;
+	int port;
 	IO *io;
+	int active;
+	roe_cb cb;
+	const struct service_descrpt *descrpt;
 	struct service *next;
 };
 
@@ -41,21 +46,32 @@ find_service(const char *name)
 }
 
 struct service *
-roe_start(const char *name, int port)
+roe_new(const char *name, int port)
 {
 	const struct service_descrpt *descrpt = find_service(name);
 	if (descrpt) {
 		struct service *service = malloc(sizeof(struct service));
 
-		printf("--> starting %s service on %d\n", name, port);
-
-		service->io = descrpt->init(port);
-		io_watch(service->io, IO_IN | IO_HUP, descrpt->func, NULL);
+		service->port = port;
+		service->descrpt = descrpt;
+		service->active = 0;
 		service->next = root;
 		root = service;
+
 		return service;
 	}
 	return NULL;
+}
+
+void
+roe_start(struct service *service, roe_cb cb)
+{
+	printf("--> starting %s service on %d\n", service->descrpt->name, service->port);
+
+	service->active = 1;
+	service->cb = cb;
+	service->io = service->descrpt->init(service->port);
+	io_watch(service->io, IO_IN | IO_HUP, service->descrpt->func, service);
 }
 
 void

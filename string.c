@@ -37,7 +37,6 @@ string_extendby(struct string *sb, int len)
 	else
 		sb->buflen = next_power(len);
 
-alloc:
 	buf = realloc(sb->buf, sb->buflen);
 	sb->buf = buf;
 }

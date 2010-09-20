@@ -14,12 +14,19 @@ end(int sig)
 	roe_stop(http);
 }
 
+void
+on_request(struct service *service, struct conn *conn)
+{
+}
+
 int
 main(int argc, char *argv[])
 {
 	signal(SIGINT, end);
 
-	http = roe_start("http", 9991);
+	http = roe_new("http", 9991);
+	roe_start(http, on_request);
+
 	io_run();
 
 	return 0;
