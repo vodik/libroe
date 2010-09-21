@@ -26,6 +26,7 @@ struct conn *
 conn_new(struct service *service, IO *io)
 {
 	struct conn *conn = malloc(sizeof(struct conn));
+	conn->request = NULL;
 	conn->io = io;
 	conn->service = service;
 	conn->refs = 1;
@@ -37,6 +38,8 @@ void
 conn_close(struct conn *conn)
 {
 	if (--conn->refs == 0) {
+		if (conn->request)
+			request_free(conn->request);
 		io_close(conn->io);
 		free(conn);
 	}

@@ -28,7 +28,12 @@ on_request(struct service *service, struct conn *conn)
 	printf(" > USER_AGENT: %s\n", request_header(request, "User-Agent"));
 
 	if (strcmp("/", request->path) == 0) {
+		printf("IT WANTS ROOT!\n");
+	} else if (strcmp("/simon", request->path) == 0) {
+		printf("IT WANTS ME!\n");
 	}
+
+	conn_close(conn);
 }
 
 int

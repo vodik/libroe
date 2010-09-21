@@ -90,7 +90,6 @@ http_accept(IO *io, int events, void *arg)
 
 			/* TODO: create conn */
 			struct conn *conn = conn_new(service, client);
-			conn->service = arg;
 
 			printf("--> accepted\n");
 			io_watch(client, IO_IN | IO_HUP, http_incoming, conn);

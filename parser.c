@@ -175,6 +175,7 @@ struct request *
 request_new()
 {
 	struct request *request = malloc(sizeof(struct request));
+	memset(request, 0, sizeof(struct request));
 	return request;
 }
 
@@ -188,6 +189,13 @@ parse_request(struct request *request, IO *io)
 	struct string *header = string_new(0);
 	struct string *data = string_new(0);
 	struct string *dest = data;
+
+	if (request->headers) {
+		hashtable_free(request->headers, free);
+		free(request->method);
+		free(request->path);
+		free(request->version);
+	}
 
 	request->headers = hashtable_new(23, NULL);
 
@@ -229,6 +237,9 @@ parse_request(struct request *request, IO *io)
 void
 request_free(struct request *request)
 {
+	if (!request)
+		return;
+
 	hashtable_free(request->headers, free);
 	free(request->method);
 	free(request->path);

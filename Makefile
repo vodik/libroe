@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Werror -pedantic -std=gnu99 -O3
+CFLAGS = -Wall -Werror -pedantic -std=gnu99 -g
 LDFLAGS = -lm
 
 EXE = libroe_test
