@@ -7,6 +7,7 @@
 #include "services.h"
 #include "conn.h"
 #include "parser.h"
+#include "response.h"
 
 struct service *http;
 
@@ -29,9 +30,9 @@ on_request(struct service *service, struct conn *conn)
 	printf(" > USER_AGENT: %s\n", request_header(request, "User-Agent"));
 
 	if (strcmp("/", request->path) == 0) {
-		printf("IT WANTS ROOT!\n");
-	} else if (strcmp("/simon", request->path) == 0) {
-		printf("IT WANTS ME!\n");
+		respond_with_file(conn, "index.html");
+	} else {
+		respond_with_file(conn, request->path + 1);
 	}
 
 	conn_close(conn);

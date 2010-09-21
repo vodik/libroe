@@ -12,4 +12,6 @@ void response_header_set(struct response *response, const char *header, const ch
 void response_write(struct response *response, const char *data, size_t len);
 void response_send(struct response *response, struct conn *conn);
 
+void respond_with_file(struct conn *conn, const char *filename);
+
 #endif
