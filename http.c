@@ -89,7 +89,7 @@ http_accept(IO *io, int events, void *arg)
 			client = io_new_fd(cfd);
 
 			/* TODO: create conn */
-			struct conn *conn = conn_new(service, io);
+			struct conn *conn = conn_new(service, client);
 			conn->service = arg;
 
 			printf("--> accepted\n");

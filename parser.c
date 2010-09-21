@@ -172,7 +172,7 @@ state_field(IO *io, struct string *dest)
 ////////////////////////////////////////////////////////////////////////////////
 
 struct request *
-parser_new()
+request_new()
 {
 	struct request *request = malloc(sizeof(struct request));
 	return request;

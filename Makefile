@@ -2,8 +2,8 @@ CC = gcc
 CFLAGS = -Wall -Werror -pedantic -std=gnu99 -O3
 LDFLAGS = -lm
 
-EXE = libroe2
-SRC = libroe2.c services.c io.c watch.c http.c websockets.c network.c util.c obuf.c ibuf.c buf.c parser.c string.c hashtable.c
+EXE = libroe_test
+SRC = test.c conn.c services.c io.c watch.c http.c websockets.c network.c util.c obuf.c ibuf.c buf.c parser.c string.c hashtable.c
 OBJ = ${SRC:.c=.o}
 
 all: ${EXE}

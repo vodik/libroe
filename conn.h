@@ -1,6 +1,8 @@
 #ifndef LIBROE_CONN
 #define LIBROE_CONN
 
+#include "io.h"
+
 struct conn;
 struct service;
 struct request;
