@@ -10,11 +10,12 @@
 
 struct service *http;
 
-void
+__attribute__((noreturn)) void
 end(int sig)
 {
 	printf("\nShutting down!\n");
 	roe_stop(http);
+	exit(0);
 }
 
 void

@@ -62,7 +62,7 @@ io_close(struct io *io)
 	}
 }
 
-int
+__attribute__ ((pure)) int
 io_get_fd(struct io *io)
 {
 	return io->fd;

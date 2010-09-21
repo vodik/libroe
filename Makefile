@@ -1,9 +1,10 @@
-CC = gcc
+#CC = gcc
+CC = clang
 CFLAGS = -Wall -Werror -pedantic -std=gnu99 -g
 LDFLAGS = -lm
 
 EXE = libroe_test
-SRC = test.c conn.c services.c io.c watch.c http.c websockets.c network.c util.c obuf.c ibuf.c buf.c parser.c string.c hashtable.c
+SRC = test.c conn.c services.c io.c watch.c http.c websockets.c network.c util.c obuf.c ibuf.c buf.c parser.c string.c hashtable.c response.c
 OBJ = ${SRC:.c=.o}
 
 all: ${EXE}
